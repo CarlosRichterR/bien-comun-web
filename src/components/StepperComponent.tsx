@@ -10,25 +10,38 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import { SelectEventType } from './steps/SelectEventType';
+import { AddItemsStep } from './steps/AddItemsStep';
+import { AdditionalDetailsStep } from './steps/AdditionalDetailsStep';
 
-const steps = [
-    {
-        label: 'Define los detalles de la lista',
-        description: `Introduce el nombre de la lista, una descripción y la fecha del evento para comenzar a crear la lista de regalos.`,
-    },
-    {
-        label: 'Agrega categorías de regalos',
-        description: 'Añade categorías para organizar los regalos que los usuarios podrán elegir.',
-    },
-    {
-        label: 'Revisa y publica la lista',
-        description: `Revisa la información ingresada y publica la lista para que los invitados puedan ver y aportar.`,
-    },
-];
-
+interface Step {
+    label: string;
+    component: React.ReactNode;
+    isNextDisabled?: boolean;
+}
 export default function StepperComponent() {
     const theme = useTheme();
     const [activeStep, setActiveStep] = React.useState(0);
+    const [eventTypeSelected, setEventTypeSelected] = React.useState(false);
+
+    const steps: Step[] = [
+        {
+            label: 'Escoge el tipo de evento',
+            component: (
+                <SelectEventType onSelect={(isSelected: boolean) => setEventTypeSelected(isSelected)} />
+            ),
+            isNextDisabled: !eventTypeSelected,
+        },
+        {
+            label: 'Añadir artículos y guardar borrador',
+            component: <AddItemsStep />,
+        },
+        {
+            label: 'Introduce datos adicionales',
+            component: <AdditionalDetailsStep />,
+        },
+    ];
+
     const maxSteps = steps.length;
 
     const handleNext = () => {
@@ -55,7 +68,7 @@ export default function StepperComponent() {
                 <Typography>{steps[activeStep].label}</Typography>
             </Paper>
             <Box sx={{ height: 255, maxWidth: 600, width: '100%', p: 2 }}>
-                {steps[activeStep].description}
+                {steps[activeStep].component}
             </Box>
             <MobileStepper
                 variant="text"
@@ -66,7 +79,7 @@ export default function StepperComponent() {
                     <Button
                         size="small"
                         onClick={handleNext}
-                        disabled={activeStep === maxSteps - 1}
+                        disabled={activeStep === maxSteps - 1 || steps[activeStep]?.isNextDisabled}
                     >
                         Siguiente
                         {theme.direction === 'rtl' ? (

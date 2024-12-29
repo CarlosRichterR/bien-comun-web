@@ -6,7 +6,6 @@ const CreateListPage = () => {
         <div>
             <h1>Crear Nueva Lista</h1>
             <StepperComponent />
-            {/* Aquí podrías agregar el formulario o cualquier otro contenido necesario */}
         </div>
     );
 };
