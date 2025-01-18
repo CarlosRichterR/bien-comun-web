@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { FcGoogle } from 'react-icons/fc'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from 'next/image'
+import Logo from '../../../public/assets/images/bc-2.jpg';
 
 interface LoginPageProps {
     onLogin: () => void;
@@ -47,7 +48,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             <Card className="w-[350px]">
                 <div className="flex justify-center mt-6 mb-4">
                     <Image
-                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bc-2.jpg-b9HL9ffL82As12Wgtz7Mu2tULFJMf3.jpeg"
+                        src={Logo}
                         alt="BC logo"
                         width={200}
                         height={200}

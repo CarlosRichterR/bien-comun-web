@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import Image from 'next/image';
-
+import Logo from '../../../public/assets/images/bc-2.jpg';
 type AppState = "dashboard" | "my-lists" | "inbox" | "profile";
 
 interface NavigationPanelProps {
@@ -46,7 +46,7 @@ export function NavigationPanel({ onNavigate }: NavigationPanelProps) {
                 <div className="flex flex-col space-y-2 mb-6">
                     <div className="flex items-center justify-center">
                         <Image
-                            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bc-2.jpg-b9HL9ffL82As12Wgtz7Mu2tULFJMf3.jpeg"
+                            src={Logo}
                             alt="BC logo"
                             width={190}
                             height={160}

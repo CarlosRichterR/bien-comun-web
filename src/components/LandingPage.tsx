@@ -4,7 +4,7 @@ import { Gift, Heart, Users, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 import { FaTiktok, FaInstagram, FaFacebook } from 'react-icons/fa'
 import { motion } from 'framer-motion'
-
+import Logo from '../../public/assets/images/bc-2.jpg';
 interface LandingPageProps {
     onGetStarted: () => void;
     onLogin: () => void;
@@ -57,7 +57,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                         <div className="flex flex-col items-center space-y-4 text-center">
                             <motion.div variants={itemVariants}>
                                 <Image
-                                    src="/placeholder.svg?height=200&width=200"
+                                    src={Logo}
                                     alt="BC logo"
                                     width={200}
                                     height={200}

@@ -11,6 +11,7 @@ import { MyLists } from "./lists/MyLists"
 import { Inbox } from "./notifications/Inbox"
 import { ProfilePage } from "./user/ProfilePage"
 import { ProgressReport } from "./reports/ProgressReport"
+import { PublishedListView } from "./gift-list/PublishedListView"
 
 type AppState = "landing" | "login" | "dashboard" | "create-list" | "published-view" | "inbox" | "my-lists" | "profile" | "progress-report"
 
@@ -45,8 +46,8 @@ export default function GiftListApp() {
     }
 
     const handleViewList = (listId: number) => {
-        console.log("Viewing list:", listId)
-        // Implement view list logic here
+        console.log("Viewing list:", listId);
+        setAppState("published-view");
     }
 
     const handleViewNotifications = () => {
@@ -57,6 +58,14 @@ export default function GiftListApp() {
         console.log("Viewing progress report for list:", listId)
         setAppState("progress-report")
     }
+
+    const mockPublishedListViewData = {
+        listName: "Sample Published List",
+        items: [
+            { name: "Item 1", quantity: 1, price: 10 },
+            { name: "Item 2", quantity: 2, price: 20 },
+        ],
+    };
 
     return (
         <div className="flex min-h-screen bg-background">
@@ -107,8 +116,14 @@ export default function GiftListApp() {
                                 onBack={() => setAppState("dashboard")}
                             />
                         )}
+                        {appState === "published-view" && (
+                            <PublishedListView
+                                {...mockPublishedListViewData}
+                                onBack={() => setAppState("dashboard")}
+                            />
+                        )}
                         {appState === "my-lists" && (
-                            <MyLists onEdit={handleEditList} />
+                            <MyLists onEdit={handleEditList} onView={handleViewList} />
                         )}
                         {appState === "inbox" && (
                             <Inbox notifications={[]} />
@@ -136,4 +151,3 @@ export default function GiftListApp() {
         </div>
     )
 }
-
