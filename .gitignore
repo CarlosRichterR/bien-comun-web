@@ -38,3 +38,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json
+.vs/bien-comun-web/FileContentIndex/5d3ca83e-45b8-4722-a8d5-95975cc60f60.vsidx
+.vs/bien-comun-web/FileContentIndex/74d7e1a7-f2e6-432c-9d69-6d214546e95a.vsidx
+.vs/bien-comun-web/FileContentIndex/34633d0d-3464-4557-a811-c8444f041aed.vsidx
+.vs/bien-comun-web/FileContentIndex/c6e79349-722b-4e0a-89d3-b5ce0c941c0f.vsidx
+.vs/bien-comun-web/FileContentIndex/d79a887c-f333-4b77-971e-ffbec31abb81.vsidx
+.vs/bien-comun-web/v17/.wsuo
