@@ -46,3 +46,6 @@ next-env.d.ts
 .vs/bien-comun-web/FileContentIndex/c6e79349-722b-4e0a-89d3-b5ce0c941c0f.vsidx
 .vs/bien-comun-web/FileContentIndex/d79a887c-f333-4b77-971e-ffbec31abb81.vsidx
 .vs/bien-comun-web/v17/.wsuo
+/.vs/bien-comun-web/v17/
+*.vsidx
+/.vs/bien-comun-web/v17/
