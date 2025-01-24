@@ -5,12 +5,21 @@ import Image from 'next/image'
 import { FaTiktok, FaInstagram, FaFacebook } from 'react-icons/fa'
 import { motion } from 'framer-motion'
 import Logo from '../../public/assets/images/bc-2.jpg';
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react';
 interface LandingPageProps {
     onGetStarted: () => void;
     onLogin: () => void;
 }
 
-export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
+export default function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
+    const router = useRouter();
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -33,6 +42,14 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
         },
     }
 
+    const handleLoginClick = () => {
+        onLogin();
+        if (isClient) {
+            router.push('/auth');
+        }
+    };
+
+
     return (
         <div className="min-h-screen bg-background flex flex-col w-full">
             <motion.header
@@ -42,7 +59,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                 transition={{ duration: 0.5 }}
             >
                 <nav className="ml-auto flex gap-4 sm:gap-6">
-                    <Button variant="ghost" onClick={onLogin}>Iniciar Sesión</Button>
+                    <Button variant="ghost" onClick={handleLoginClick}>Iniciar Sesión</Button>
                     <Button onClick={onGetStarted}>Comenzar</Button>
                 </nav>
             </motion.header>
