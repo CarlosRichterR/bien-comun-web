@@ -11,10 +11,11 @@ import Image from 'next/image'
 import Logo from '../../../public/assets/images/bc-2.jpg';
 
 interface LoginPageProps {
-    onLogin: () => void;
+    onLogin: (user:string, pass:string) => void;
+    errorMessage: string | null;
 }
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
+export default function LoginPage({ onLogin, errorMessage }: LoginPageProps) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [name, setName] = useState('')
@@ -25,8 +26,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault()
         // Here you would typically handle the login logic
-        console.log('Login attempted with:', email, password)
-        onLogin()
+        onLogin(email, password)
     }
 
     const handleRegister = (e: React.FormEvent) => {
@@ -36,13 +36,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             return
         }
         console.log('Registro intentado con:', username, email, password)
-        onLogin()
+        onLogin(email, password)
     }
 
     const handleGoogleLogin = () => {
         // Here you would typically handle Google login logic
         console.log('Google login attempted')
-        onLogin()
+        onLogin(email, password)
     }
 
     return (
@@ -92,6 +92,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                                         />
                                     </div>
                                 </div>
+                                {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
                                 <Button className="w-full mt-4" type="submit">
                                     Iniciar Sesión
                                 </Button>

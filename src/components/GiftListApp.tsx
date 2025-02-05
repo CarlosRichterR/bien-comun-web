@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import LandingPage  from "./LandingPage"
-import LoginPage  from "../app/auth/page"
+import LandingPage from "./LandingPage"
+import LoginPage from "../app/auth/page"
 import Dashboard from "./Dashboard"
 import { NavigationPanel } from "./layout/NavigationPanel"
 import { LogoutModal } from "../app/auth/LogoutModal"
@@ -12,18 +12,26 @@ import { Inbox } from "./notifications/Inbox"
 import { ProfilePage } from "./user/ProfilePage"
 import { ProgressReport } from "./reports/ProgressReport"
 import { PublishedListView } from "./gift-list/PublishedListView"
+import { handleLogin } from "@/services/authService"
 
 type AppState = "landing" | "login" | "dashboard" | "create-list" | "published-view" | "inbox" | "my-lists" | "profile" | "progress-report"
 
 export default function GiftListApp() {
-    const [appState, setAppState] = useState<AppState>("landing")
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
-    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+    const [appState, setAppState] = useState<AppState>("landing");
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const handleLogin = () => {
-        setIsAuthenticated(true)
-        setAppState("dashboard")
-    }
+    const handleLoginWrapper = async (username: string, password: string) => {
+        const result = await handleLogin(username, password);
+        if (result.success) {
+            setIsAuthenticated(true);
+            setAppState("dashboard");
+            setErrorMessage(null); // Clear any previous error message
+        } else {
+            setErrorMessage(result.errorMessage);
+        }
+    };
 
     const handleLogout = () => {
         setIsAuthenticated(false)
@@ -76,7 +84,7 @@ export default function GiftListApp() {
                 />
             )}
             {appState === "login" && (
-                <LoginPage onLogin={handleLogin} />
+                <LoginPage onLogin={handleLoginWrapper} errorMessage={errorMessage} />
             )}
             {isAuthenticated && (
                 <>
