@@ -33,6 +33,11 @@ export default function GiftListApp() {
         }
     };
 
+    const handleLoginGoogle = () => {
+        setIsAuthenticated(true);
+        setAppState("dashboard");
+    };
+
     const handleLogout = () => {
         setIsAuthenticated(false)
         setAppState("landing")
@@ -84,7 +89,10 @@ export default function GiftListApp() {
                 />
             )}
             {appState === "login" && (
-                <LoginPage onLogin={handleLoginWrapper} errorMessage={errorMessage} />
+                <LoginPage
+                    onLogin={handleLoginWrapper}
+                    errorMessage={errorMessage}
+                    onGoogleLogin={handleLoginGoogle} />
             )}
             {isAuthenticated && (
                 <>

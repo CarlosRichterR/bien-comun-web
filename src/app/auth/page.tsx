@@ -13,9 +13,10 @@ import Logo from '../../../public/assets/images/bc-2.jpg';
 interface LoginPageProps {
     onLogin: (user:string, pass:string) => void;
     errorMessage: string | null;
+    onGoogleLogin: () => void;
 }
 
-export default function LoginPage({ onLogin, errorMessage }: LoginPageProps) {
+export default function LoginPage({ onLogin, errorMessage, onGoogleLogin }: LoginPageProps) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [name, setName] = useState('')
@@ -42,7 +43,7 @@ export default function LoginPage({ onLogin, errorMessage }: LoginPageProps) {
     const handleGoogleLogin = () => {
         // Here you would typically handle Google login logic
         console.log('Google login attempted')
-        onLogin(email, password)
+        onGoogleLogin()
     }
 
     return (
