@@ -9,6 +9,8 @@ import { FcGoogle } from 'react-icons/fc'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from 'next/image'
 import Logo from '../../../public/assets/images/bc-2.jpg';
+import { handleLogin } from "@/services/authService";
+import { useRouter } from 'next/navigation';
 
 interface LoginPageProps {
     onLogin: (user:string, pass:string) => void;
@@ -23,11 +25,16 @@ export default function LoginPage({ onLogin, errorMessage, onGoogleLogin }: Logi
     const [username, setUsername] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
+    const router = useRouter()
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin2 = async (e: React.FormEvent) => {
         e.preventDefault()
-        // Here you would typically handle the login logic
-        onLogin(email, password)
+        const result = await handleLogin(email, password)
+        if (result.success) {
+            router.push('/dashboard')
+        } else {
+            alert(result.errorMessage)
+        }
     }
 
     const handleRegister = (e: React.FormEvent) => {
@@ -68,7 +75,7 @@ export default function LoginPage({ onLogin, errorMessage, onGoogleLogin }: Logi
                             <TabsTrigger value="register">Registrarse</TabsTrigger>
                         </TabsList>
                         <TabsContent value="login">
-                            <form onSubmit={handleLogin}>
+                            <form onSubmit={handleLogin2}>
                                 <div className="grid w-full items-center gap-4">
                                     <div className="flex flex-col space-y-1.5">
                                         <Label htmlFor="email">Email</Label>

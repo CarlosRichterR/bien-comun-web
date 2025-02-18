@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import LandingPage from "./LandingPage"
-import LoginPage from "../app/auth/page"
 import Dashboard from "./Dashboard"
 import { NavigationPanel } from "./layout/NavigationPanel"
 import { LogoutModal } from "../app/auth/LogoutModal"
@@ -87,12 +86,6 @@ export default function GiftListApp() {
                     onGetStarted={() => setAppState("login")}
                     onLogin={() => setAppState("login")}
                 />
-            )}
-            {appState === "login" && (
-                <LoginPage
-                    onLogin={handleLoginWrapper}
-                    errorMessage={errorMessage}
-                    onGoogleLogin={handleLoginGoogle} />
             )}
             {isAuthenticated && (
                 <>
