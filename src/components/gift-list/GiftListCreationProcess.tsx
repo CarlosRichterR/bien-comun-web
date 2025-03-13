@@ -14,6 +14,12 @@ import { Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 type Step = "event-selection" | "guest-info" | "gift-selection" | "list-details" | "list-confirmation"
+type ListStatus = "draft" | "publish"
+
+interface EventTypeDTO {
+    type: EventType;
+    customType?: string;
+}
 
 interface GiftListCreationProcessProps {
     onComplete: (listData: any) => void;
@@ -24,7 +30,7 @@ interface GiftListCreationProcessProps {
 export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftListCreationProcessProps) {
     const router = useRouter()
     const [currentStep, setCurrentStep] = useState<Step>("event-selection")
-    const [eventType, setEventType] = useState<EventType | null>(null)
+    const [eventType, setEventType] = useState<EventType>(EventType.Wedding)
     const [customEventType, setCustomEventType] = useState<string | undefined>()
     const [guestCount, setGuestCount] = useState<number>(0)
     const [contributionPerGuest, setContributionPerGuest] = useState<number>(0)
@@ -34,7 +40,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     const [confirmationData, setConfirmationData] = useState<any>(null)
     const [userEmail, setUserEmail] = useState<string>(""); // Added state for user email
     const [userPhone, setUserPhone] = useState<string>(""); // Added state for user phone
-
+    const [listStatus, setListStatus] = useState<ListStatus>("draft"); // Added state for list status
 
     const steps: Step[] = ["event-selection", "guest-info", "gift-selection", "list-details", "list-confirmation"]
     const currentStepIndex = steps.indexOf(currentStep)
@@ -61,28 +67,60 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         }
     }
 
-    const handleExit = () => {
+    const handleEventTypeUpdate = (type: EventType) => {
+        setEventType(type)
+    }
+
+    const handleCustomEventTypeUpdate = (customType: string) => {
+        setCustomEventType(customType)
+    }
+
+    const handleGuestInfoUpdate = (count: number) => {
+        setGuestCount(count)
+    }
+
+    const handleMinContributionUpdate = (minContrib: number) => {
+        setMinContribution(minContrib)
+    }
+
+    const handleExit = async () => {
         // Save as draft logic here
         const draftData = {
-            eventType,
-            customEventType,
+            eventTypeDTO: {
+                eventType: eventType as number,
+                customEventType
+            },
             guestCount,
-            contributionPerGuest,
             minContribution,
-            selectedGifts,
-            listDetails,
-            confirmationData
+            listStatus
         }
-        // TODO: Implement API call to save draft
-        console.log('Saving as draft:', draftData)
-        localStorage.setItem('giftListDraft', JSON.stringify(draftData))
-        onExit()
+
+        try {
+            const response = await fetch(`${process.env.API_URL}/api/List`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(draftData)
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to save draft')
+            }
+
+            // const result = await response.json()
+            // console.log('Draft saved successfully:', result)
+            // localStorage.setItem('giftListDraft', JSON.stringify(draftData))
+            onExit()
+        } catch (error) {
+            console.error('Error saving draft:', error)
+            // Handle error (e.g., show a notification to the user)
+        }
     }
 
     const handleEventTypeSelected = (type: EventType, custom?: string) => {
         setEventType(type)
         setCustomEventType(custom)
-        handleNext()
     }
 
     const handleGuestInfoSubmitted = (count: number, minContrib: number) => {
@@ -115,24 +153,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     }
 
     const loadDraft = () => {
-        const draftData = localStorage.getItem('giftListDraft')
-        if (draftData) {
-            const parsedData = JSON.parse(draftData)
-            setEventType(parsedData.eventType)
-            setCustomEventType(parsedData.customEventType)
-            setGuestCount(parsedData.guestCount)
-            setContributionPerGuest(parsedData.contributionPerGuest)
-            setMinContribution(parsedData.minContribution)
-            setSelectedGifts(parsedData.selectedGifts)
-            setListDetails(parsedData.listDetails)
-            setConfirmationData(parsedData.confirmationData)
-            // Set the current step based on the available data
-            if (parsedData.confirmationData) setCurrentStep('list-confirmation')
-            else if (parsedData.listDetails) setCurrentStep('list-details')
-            else if (parsedData.selectedGifts.length > 0) setCurrentStep('gift-selection')
-            else if (parsedData.guestCount > 0) setCurrentStep('guest-info')
-            else setCurrentStep('event-selection')
-        }
+        setEventType(EventType.Wedding)
     }
 
     useEffect(() => {
@@ -170,9 +191,12 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                 >
                     {currentStep === "event-selection" && (
                         <EventTypeSelection
+                            eventType={eventType} // Pasar eventType como prop
                             onEventTypeSelected={handleEventTypeSelected}
                             onNext={handleNext}
                             onBack={onBack}
+                            onEventTypeChange={handleEventTypeUpdate}
+                            onCustomEventTypeChange={handleCustomEventTypeUpdate}
                         />
                     )}
                     {currentStep === "guest-info" && (
@@ -180,6 +204,8 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                             onSubmit={handleGuestInfoSubmitted}
                             onBack={handleBack}
                             onNext={handleNext}
+                            onGuestCountChange={handleGuestInfoUpdate}
+                            onMinContributionChange={handleMinContributionUpdate}
                         />
                     )}
                     {currentStep === "gift-selection" && (

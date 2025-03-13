@@ -15,11 +15,25 @@ interface GuestInfoCollectionProps {
     onSubmit: (guestCount: number, minContribution: number) => void;
     onBack: () => void;
     onNext: () => void;
+    onGuestCountChange: (count: number) => void; // Nueva prop
+    onMinContributionChange: (minContrib: number) => void; // Nueva prop
 }
 
-export function GuestInfoCollection({ onSubmit, onBack, onNext }: GuestInfoCollectionProps) {
+export function GuestInfoCollection({ onSubmit, onBack, onNext, onGuestCountChange, onMinContributionChange }: GuestInfoCollectionProps) {
     const [guestCount, setGuestCount] = useState<number>(0)
     const [minContribution, setMinContribution] = useState<number>(10)
+
+    const handleGuestCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const count = parseInt(e.target.value, 10)
+        setGuestCount(count)
+        onGuestCountChange(count) // Llamar a la función de actualización
+    }
+
+    const handleMinContributionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const minContrib = parseFloat(e.target.value)
+        setMinContribution(minContrib)
+        onMinContributionChange(minContrib) // Llamar a la función de actualización
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -44,7 +58,7 @@ export function GuestInfoCollection({ onSubmit, onBack, onNext }: GuestInfoColle
                             type="number"
                             min="1"
                             value={guestCount || ''}
-                            onChange={(e) => setGuestCount(parseInt(e.target.value) || 0)}
+                            onChange={handleGuestCountChange}
                             required
                         />
                     </div>
@@ -68,7 +82,7 @@ export function GuestInfoCollection({ onSubmit, onBack, onNext }: GuestInfoColle
                             min="0"
                             step="0.01"
                             value={minContribution || ''}
-                            onChange={(e) => setMinContribution(parseFloat(e.target.value) || 0)}
+                            onChange={handleMinContributionChange}
                             required
                         />
                     </div>

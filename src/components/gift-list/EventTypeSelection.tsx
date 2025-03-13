@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -6,29 +6,57 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
 import { Home } from 'lucide-react'
 
-export type EventType = "Boda" | "Cumpleaños" | "Baby Shower" | "Otro"
+export enum EventType {
+    Wedding = 0,
+    Birthday,
+    BabyShower,
+    Other
+}
 
 interface EventTypeSelectionProps {
+    eventType: EventType; // Nueva prop
     onEventTypeSelected: (eventType: EventType, customEventType?: string) => void;
     onNext: () => void;
     onBack: () => void;
+    onEventTypeChange: (eventType: EventType) => void;
+    onCustomEventTypeChange: (customEventType: string) => void;
 }
 
-export function EventTypeSelection({ onEventTypeSelected, onNext, onBack }: EventTypeSelectionProps) {
-    const [selectedType, setSelectedType] = useState<EventType>("Boda")
+export function EventTypeSelection({ eventType, onEventTypeSelected, onNext, onBack, onEventTypeChange, onCustomEventTypeChange }: EventTypeSelectionProps) {
+    const [selectedType, setSelectedType] = useState<EventType>(eventType)
     const [customEventType, setCustomEventType] = useState("")
+
+    useEffect(() => {
+        setSelectedType(eventType)
+    }, [eventType])
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        if (selectedType === "Otro" && !customEventType.trim()) {
+        if (selectedType === EventType.Other && !customEventType.trim()) {
             return // Don't submit if "Otro" is selected but no custom type is entered
         }
-        onEventTypeSelected(selectedType, selectedType === "Otro" ? customEventType : undefined)
+        onEventTypeSelected(selectedType, selectedType === EventType.Other ? customEventType : undefined)
         onNext()
     }
 
     const handleGoToDashboard = () => {
         onBack();
+    }
+
+    const handleCustomEventTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        setCustomEventType(value)
+        if (value !== customEventType) {
+            onCustomEventTypeChange(value)
+        }
+    }
+
+    const handleEventTypeChange = (value: string) => {
+        const eventType = parseInt(value) as EventType
+        setSelectedType(eventType)
+        if (eventType !== selectedType) {
+            onEventTypeChange(eventType)
+        }
     }
 
     return (
@@ -39,34 +67,34 @@ export function EventTypeSelection({ onEventTypeSelected, onNext, onBack }: Even
             <form onSubmit={handleSubmit}>
                 <CardContent>
                     <RadioGroup
-                        value={selectedType}
-                        onValueChange={(value) => setSelectedType(value as EventType)}
+                        value={selectedType.toString()}
+                        onValueChange={handleEventTypeChange}
                         className="space-y-4"
                     >
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Boda" id="boda" />
+                            <RadioGroupItem value={EventType.Wedding.toString()} id="boda" />
                             <Label htmlFor="boda">Boda</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Cumpleaños" id="cumpleanos" />
+                            <RadioGroupItem value={EventType.Birthday.toString()} id="cumpleanos" />
                             <Label htmlFor="cumpleanos">Cumpleaños</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Baby Shower" id="babyShower" />
+                            <RadioGroupItem value={EventType.BabyShower.toString()} id="babyShower" />
                             <Label htmlFor="babyShower">Baby Shower</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Otro" id="otro" />
+                            <RadioGroupItem value={EventType.Other.toString()} id="otro" />
                             <Label htmlFor="otro">Otro</Label>
                         </div>
                     </RadioGroup>
-                    {selectedType === "Otro" && (
+                    {selectedType === EventType.Other && (
                         <div className="mt-4">
                             <Label htmlFor="customEventType">Especifica el Tipo de Evento</Label>
                             <Input
                                 id="customEventType"
                                 value={customEventType}
-                                onChange={(e) => setCustomEventType(e.target.value)}
+                                onChange={handleCustomEventTypeChange}
                                 placeholder="Ingresa el tipo de evento personalizado"
                                 className="mt-1"
                             />
