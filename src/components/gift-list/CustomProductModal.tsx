@@ -30,7 +30,7 @@ export function CustomProductModal({ isOpen, onClose, onAddProduct }: CustomProd
             price: parseFloat(price) / 6.96, // Convert to USD for consistency
             category,
             imageUrl: imageUrl || '/placeholder.svg?height=100&width=100',
-            vendor: 'Personalizado',
+            supplier: 'Personalizado',
             referenceUrl: referenceUrl || undefined,
         }
         onAddProduct(newProduct)

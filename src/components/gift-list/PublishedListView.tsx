@@ -22,11 +22,11 @@ interface PublishedListViewProps {
 }
 
 const mockItems: CatalogItem[] = [
-    { id: "1", name: "Refrigerador", price: 1500, category: "Electrodomésticos", imageUrl: "/placeholder.svg?height=200&width=200", vendor: "ElectroHogar", contributedAmount: 1000 },
-    { id: "2", name: "Lavadora", price: 1000, category: "Electrodomésticos", imageUrl: "/placeholder.svg?height=200&width=200", vendor: "ElectroHogar", contributedAmount: 800 },
-    { id: "3", name: "Microondas", price: 500, category: "Electrodomésticos", imageUrl: "/placeholder.svg?height=200&width=200", vendor: "ElectroHogar", contributedAmount: 500 },
-    { id: "4", name: "Juego de Comedor", price: 1200, category: "Muebles", imageUrl: "/placeholder.svg?height=200&width=200", vendor: "MuebleríaElegante", contributedAmount: 700 },
-    { id: "5", name: "Televisor", price: 800, category: "Electrónica", imageUrl: "/placeholder.svg?height=200&width=200", vendor: "TechStore", contributedAmount: 500 },
+    { id: "1", name: "Refrigerador", price: 1500, category: "Electrodomésticos", imageUrl: "/placeholder.svg?height=200&width=200", supplier: "ElectroHogar", contributedAmount: 1000 },
+    { id: "2", name: "Lavadora", price: 1000, category: "Electrodomésticos", imageUrl: "/placeholder.svg?height=200&width=200", supplier: "ElectroHogar", contributedAmount: 800 },
+    { id: "3", name: "Microondas", price: 500, category: "Electrodomésticos", imageUrl: "/placeholder.svg?height=200&width=200", supplier: "ElectroHogar", contributedAmount: 500 },
+    { id: "4", name: "Juego de Comedor", price: 1200, category: "Muebles", imageUrl: "/placeholder.svg?height=200&width=200", supplier: "MuebleríaElegante", contributedAmount: 700 },
+    { id: "5", name: "Televisor", price: 800, category: "Electrónica", imageUrl: "/placeholder.svg?height=200&width=200", supplier: "TechStore", contributedAmount: 500 },
 ];
 
 export function PublishedListView({

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Gift, Trash2, Search, AlertCircle, MoreVertical, Plus } from 'lucide-react'
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -32,7 +31,6 @@ import { EventType } from "./EventTypeSelection"
 import { ItemDetailsModal } from './ItemDetailsModal'
 import { CustomProductModal } from './CustomProductModal'
 
-
 interface GiftSelectionProps {
     eventType: EventType | null;
     customEventType?: string;
@@ -40,7 +38,6 @@ interface GiftSelectionProps {
     initialStatus?: 'draft' | 'published';
     onSave: (items: CatalogItem[], status: 'draft' | 'published') => void;
     guestCount: number;
-    contributionPerGuest: number;
     minContribution: number; // Added minContribution prop
     onBack: () => void;
     onNext: () => void;
@@ -53,150 +50,181 @@ export function GiftSelection({
     initialStatus = 'draft',
     onSave,
     guestCount,
-    contributionPerGuest,
     minContribution, // Added minContribution parameter
     onBack,
     onNext
 }: GiftSelectionProps) {
-    const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([])
-    const [catalogItems, setCatalogItems] = useState<PaginatedResponse>({ items: [], totalItems: 0, currentPage: 1, totalPages: 1, itemsPerPage: 6 })
-    const [currentCategory, setCurrentCategory] = useState("Todos")
-    const [searchTerm, setSearchTerm] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [status, setStatus] = useState<'draft' | 'published'>(initialStatus)
-    const [vendors, setVendors] = useState<string[]>([])
-    const [selectedVendor, setSelectedVendor] = useState<string>('Todos')
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000])
-    const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isCustomProductModalOpen, setIsCustomProductModalOpen] = useState(false) // Added state for custom product modal
+    const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([]);
+    const [catalogItems, setCatalogItems] = useState<PaginatedResponse>({
+        items: [],
+        totalItems: 0,
+        currentPage: 1,
+        totalPages: 1,
+        itemsPerPage: 6,
+    });
+    const [categories, setCategories] = useState<string[]>([]); // State for categories
+    const [currentCategory, setCurrentCategory] = useState("Todos");
+    const [loadingCategories, setLoadingCategories] = useState(false); // State for loading categories
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
+    const [vendors, setVendors] = useState<string[]>([]);
+    const [selectedVendor, setSelectedVendor] = useState<string>('Todos');
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+    const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCustomProductModalOpen, setIsCustomProductModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false); // Estado de carga
 
-    const totalGiftValue = selectedGifts.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
-    const suggestedTotalAmount = guestCount * minContribution // Updated suggestedTotalAmount calculation
+    const totalGiftValue = selectedGifts.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
+    const suggestedTotalAmount = guestCount * minContribution;
 
     useEffect(() => {
-        const fetchItems = () => {
-            const response = fetchCatalogItems(
-                currentPage,
-                6,
-                currentCategory === "Todos" ? undefined : currentCategory,
-                searchTerm,
-                selectedVendor === 'Todos' ? undefined : selectedVendor,
-                priceRange
-            );
-            setCatalogItems(response);
+        const fetchItems = async () => {
+            setLoading(true); // Inicia la carga
+            try {
+                const { products, totalCount } = await fetchPaginatedProducts(
+                    currentPage,
+                    catalogItems.itemsPerPage
+                );
 
-            const uniqueVendors = Array.from(new Set(response.items.map(item => item.vendor)));
-            setVendors(['Todos', ...uniqueVendors]);
+                setCatalogItems({
+                    items: products,
+                    totalItems: totalCount,
+                    currentPage,
+                    totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
+                    itemsPerPage: catalogItems.itemsPerPage,
+                });
+
+                // const uniqueVendors = Array.from(new Set(products.map(item => item.supplier)));
+                // setVendors(['Todos', ...uniqueVendors]);
+            } catch (error) {
+                console.error('Error fetching items:', error);
+            } finally {
+                setLoading(false); // Finaliza la carga
+            }
         };
 
         fetchItems();
-    }, [currentCategory, searchTerm, currentPage, selectedVendor, priceRange]);
+    }, [currentPage, currentCategory, searchTerm, selectedVendor, priceRange]);
 
     useEffect(() => {
-        if (listId) {
-            // TODO: Implement API call to fetch list items
-            // For now, we'll use mock data
-            const mockListItems: CatalogItem[] = [
-                { id: "item-1", name: "Licuadora", price: 49.99, category: "Cocina", imageUrl: "/placeholder.svg?height=100&width=100", vendor: "ElectroHogar" },
-                { id: "item-2", name: "Tostadora", price: 29.99, category: "Cocina", imageUrl: "/placeholder.svg?height=100&width=100", vendor: "ElectroHogar" },
-            ];
-            setSelectedGifts(mockListItems);
-        }
-    }, [listId]);
+        const fetchCategories = async () => {
+            setLoadingCategories(true); // Start loading
+            try {
+                const response = await fetch(`${process.env.API_URL}/api/categories`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
 
-    const onDragEnd = (result: DropResult) => {
-        const { source, destination } = result
+                if (!response.ok) {
+                    throw new Error('Failed to fetch categories');
+                }
 
-        if (!destination) return
-
-        if (source.droppableId === destination.droppableId) {
-            // Reordering within the same list
-            const items = source.droppableId === 'Catálogo' ? [...catalogItems.items] : [...selectedGifts]
-            const [reorderedItem] = items.splice(source.index, 1)
-            items.splice(destination.index, 0, reorderedItem)
-
-            if (source.droppableId === 'Catálogo') {
-                setCatalogItems(prevCatalog => ({
-                    ...prevCatalog,
-                    items: items
-                }))
-            } else {
-                setSelectedGifts(items)
+                const data = await response.json();
+                const categoryNames = data.map((category: { id: number; name: string }) => category.name); // Extract names
+                setCategories(["Todos", ...categoryNames]); // Add "Todos" as the default category
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            } finally {
+                setLoadingCategories(false); // End loading
             }
-        } else {
-            // Moving between lists
-            const sourceItems = source.droppableId === 'Catálogo' ? [...catalogItems.items] : [...selectedGifts]
-            const destItems = destination.droppableId === 'Catálogo' ? [...catalogItems.items] : [...selectedGifts]
-            const [movedItem] = sourceItems.splice(source.index, 1)
-            destItems.splice(destination.index, 0, movedItem)
+        };
 
-            if (source.droppableId === 'Catálogo') {
-                setCatalogItems(prevCatalog => ({
-                    ...prevCatalog,
-                    items: sourceItems
-                }))
-                setSelectedGifts(destItems)
-            } else {
-                setSelectedGifts(sourceItems)
-                setCatalogItems(prevCatalog => ({
-                    ...prevCatalog,
-                    items: destItems
-                }))
-            }
-        }
-    }
+        fetchCategories();
+    }, []);
 
     const addGiftToList = (item: CatalogItem) => {
-        setSelectedGifts(prevGifts => [...prevGifts, item])
+        setSelectedGifts(prevGifts => [...prevGifts, item]);
         setCatalogItems(prevCatalog => ({
             ...prevCatalog,
-            items: prevCatalog.items.filter(catalogItem => catalogItem.id !== item.id)
-        }))
-    }
+            items: prevCatalog.items.filter(catalogItem => catalogItem.id !== item.id),
+        }));
+    };
 
     const removeGift = (id: string) => {
-        const removedGift = selectedGifts.find(gift => gift.id === id)
+        const removedGift = selectedGifts.find(gift => gift.id === id);
         if (removedGift) {
-            setSelectedGifts(prevGifts => prevGifts.filter(gift => gift.id !== id))
+            setSelectedGifts(prevGifts => prevGifts.filter(gift => gift.id !== id));
             setCatalogItems(prevCatalog => ({
                 ...prevCatalog,
-                items: [...prevCatalog.items, removedGift]
-            }))
+                items: [...prevCatalog.items, removedGift],
+            }));
         }
-    }
+    };
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value)
-        setCurrentPage(1)
-    }
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
+    };
 
     const handlePageChange = (page: number) => {
-        setCurrentPage(page)
-    }
+        setCurrentPage(page);
+    };
 
     const handleSave = (newStatus?: 'draft' | 'published') => {
         const updatedStatus = newStatus || status;
         onSave(selectedGifts, updatedStatus);
         setStatus(updatedStatus);
-    }
+    };
 
     const handleItemClick = (item: CatalogItem) => {
-        setSelectedItem(item)
-        setIsModalOpen(true)
-    }
+        setSelectedItem(item);
+        setIsModalOpen(true);
+    };
 
-    const allCategories = ["Todos", ...categories]
+    const allCategories = ["Todos", "Muebles", "Herramientas", "Electrodomésticos"];
 
     const handleSaveAndNext = () => {
         handleSave();
         onNext();
     };
 
-    const handleAddCustomProduct = (customProduct: CatalogItem) => { // Added function to handle adding a custom product
-        setSelectedGifts(prevGifts => [...prevGifts, customProduct])
-        setIsCustomProductModalOpen(false)
-    }
+    const handleAddCustomProduct = (customProduct: CatalogItem) => {
+        setSelectedGifts(prevGifts => [...prevGifts, customProduct]);
+        setIsCustomProductModalOpen(false);
+    };
+
+    const getEventTypeLabel = (eventType: EventType): string => {
+        switch (eventType) {
+            case 0:
+                return "Boda";
+            case 1:
+                return "Cumpleaños";
+            case 2:
+                return "Baby Shower";
+            case 3:
+                return "Otro";
+            default:
+                return "Desconocido";
+        }
+    };
+
+    const fetchPaginatedProducts = async (page: number, pageSize: number) => {
+        try {
+            const response = await fetch(`${process.env.API_URL}/api/Products/paginated?page=${page}&pageSize=${pageSize}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch paginated products');
+            }
+
+            const data = await response.json();
+            return {
+                products: data.items as CatalogItem[],
+                totalCount: data.totalCount as number,
+            };
+        } catch (error) {
+            console.error('Error fetching paginated products:', error);
+            return { products: [], totalCount: 0 };
+        }
+    };
 
     return (
         <div className="bg-background">
@@ -206,263 +234,181 @@ export function GiftSelection({
                 </Badge>
             </div>
             <h2 className="text-2xl font-semibold text-center mb-4">
-                Selección de Regalos para {eventType === "Otro" ? customEventType : eventType}
+                Selección de Regalos para {getEventTypeLabel(eventType as EventType) === "Otro" ? 
+                customEventType : getEventTypeLabel(eventType as EventType)}
             </h2>
-            <DragDropContext onDragEnd={onDragEnd}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="bg-card">
-                        <CardHeader>
-                            <CardTitle>Catálogo de Regalos</CardTitle>
-                            <div className="relative">
-                                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                                <Input
-                                    type="text"
-                                    placeholder="Buscar regalos..."
-                                    value={searchTerm}
-                                    onChange={handleSearch}
-                                    className="pl-8"
-                                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="bg-card">
+                    <CardHeader>
+                        <CardTitle>Catálogo de Regalos</CardTitle>
+                        <div className="relative">
+                            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            <Input
+                                type="text"
+                                placeholder="Buscar regalos..."
+                                value={searchTerm}
+                                onChange={handleSearch}
+                                className="pl-8"
+                            />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {loading ? (
+                            // Mostrar un indicador de carga mientras los datos están siendo obtenidos
+                            <div className="flex justify-center items-center h-[400px]">
+                                <p>Cargando productos...</p> {/* Puedes reemplazar esto con un spinner si lo prefieres */}
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4 mb-4">
-                                <div className="flex flex-col space-y-2">
-                                    <label htmlFor="vendor-select" className="text-sm font-medium">
-                                        Filtrar por Vendedor
-                                    </label>
-                                    <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-                                        <SelectTrigger id="vendor-select" className="w-[180px]">
-                                            <SelectValue placeholder="Seleccionar vendedor" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {vendors.map((vendor) => (
-                                                <SelectItem key={vendor} value={vendor}>
-                                                    {vendor}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="price-range" className="text-sm font-medium">
-                                        Rango de Precios: Bs {(priceRange[0] * 6.96).toFixed(2)} - Bs {(priceRange[1] * 6.96).toFixed(2)}
-                                    </label>
-                                    <div className="flex items-center space-x-4">
-                                        <Input
-                                            type="number"
-                                            value={priceRange[0]}
-                                            onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                                            className="w-20"
-                                        />
-                                        <div className="flex-1 px-2">
-                                            <Slider
-                                                min={0}
-                                                max={1000}
-                                                step={10}
-                                                value={priceRange}
-                                                onValueChange={setPriceRange}
-                                                className="relative flex items-center select-none touch-none w-full"
-                                            />
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            value={priceRange[1]}
-                                            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                                            className="w-20"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                        ) : (
                             <Tabs value={currentCategory} onValueChange={setCurrentCategory}>
-                                <TabsList className="grid grid-cols-2 lg:grid-cols-4 mb-6">
-                                    {allCategories.map((category) => (
-                                        <TabsTrigger key={category} value={category}>
-                                            {category}
-                                        </TabsTrigger>
-                                    ))}
+                                <TabsList className="flex flex-wrap gap-2 mb-6 justify-start">
+                                    {loadingCategories ? (
+                                        <p>Cargando categorías...</p> // Show loading message while fetching
+                                    ) : (
+                                        categories.map((category) => (
+                                            <TabsTrigger
+                                                key={category}
+                                                value={category}
+                                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-4 py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary data-[state=active]:bg-primary data-[state=active]:text-white"
+                                            >
+                                                {category}
+                                            </TabsTrigger>
+                                        ))
+                                    )}
                                 </TabsList>
-                                <TabsContent value={currentCategory} className="mt-4">
+                                <TabsContent value={currentCategory} className="mt-6">
                                     <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                                        <Droppable droppableId="Catálogo">
-                                            {(provided) => (
-                                                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-                                                    {catalogItems.items.map((item, index) => (
-                                                        <Draggable key={item.id} draggableId={item.id} index={index}>
-                                                            {(provided) => (
-                                                                <div
-                                                                    ref={provided.innerRef}
-                                                                    {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps}
-                                                                >
-                                                                    <Card className="bg-card cursor-pointer">
-                                                                        <CardContent className="flex items-center p-4">
-                                                                            <div className="flex items-center flex-grow cursor-pointer" onClick={() => handleItemClick(item)}>
-                                                                                <Image
-                                                                                    src={item.imageUrl || "/placeholder.svg"}
-                                                                                    alt={item.name}
-                                                                                    width={50}
-                                                                                    height={50}
-                                                                                    className="rounded-md mr-4"
-                                                                                />
-                                                                                <div>
-                                                                                    <h3 className="font-semibold">{item.name}</h3>
-                                                                                    <p className="text-sm text-muted-foreground">Bs {(item.price * 6.96).toFixed(2)}</p>
-                                                                                </div>
-                                                                            </div>
-                                                                            <DropdownMenu>
-                                                                                <DropdownMenuTrigger asChild>
-                                                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                                        <span className="sr-only">Abrir menú</span>
-                                                                                        <MoreVertical className="h-4 w-4" />
-                                                                                    </Button>
-                                                                                </DropdownMenuTrigger>
-                                                                                <DropdownMenuContent align="end">
-                                                                                    <DropdownMenuItem onClick={() => addGiftToList(item)}>
-                                                                                        <Plus className="mr-2 h-4 w-4" />
-                                                                                        Agregar a Lista de Regalos
-                                                                                    </DropdownMenuItem>
-                                                                                </DropdownMenuContent>
-                                                                            </DropdownMenu>
-                                                                        </CardContent>
-                                                                    </Card>
+                                        {catalogItems.items && catalogItems.items.length > 0 ? (
+                                            catalogItems.items.map((item, index) => (
+                                                <div key={item.id}>
+                                                    <Card className="bg-card cursor-pointer">
+                                                        <CardContent className="flex items-center p-4">
+                                                            <div
+                                                                className="flex items-center flex-grow cursor-pointer"
+                                                                onClick={() => handleItemClick(item)}
+                                                            >
+                                                                <Image
+                                                                    src={item.imageUrl || "/assets/images/gift.svg"}
+                                                                    alt={item.name || "Imagen del producto"}
+                                                                    width={50}
+                                                                    height={50}
+                                                                    className="rounded-md mr-4"
+                                                                />
+                                                                <div>
+                                                                    <h3 className="font-semibold">{item.name}</h3>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        Bs {(item.price).toFixed(2)}
+                                                                    </p>
                                                                 </div>
-                                                            )}
-                                                        </Draggable>
-                                                    ))}
-                                                    {provided.placeholder}
+                                                            </div>
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                        <span className="sr-only">Abrir menú</span>
+                                                                        <MoreVertical className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => addGiftToList(item)}>
+                                                                        <Plus className="mr-2 h-4 w-4" />
+                                                                        Agregar a Lista de Regalos
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </CardContent>
+                                                    </Card>
                                                 </div>
-                                            )}
-                                        </Droppable>
+                                            ))
+                                        ) : (
+                                            <p>No hay productos disponibles.</p> // Mensaje alternativo si no hay productos
+                                        )}
                                     </ScrollArea>
                                 </TabsContent>
                             </Tabs>
-                            <Pagination className="mt-4">
-                                <PaginationContent>
-                                    <PaginationItem>
-                                        <PaginationPrevious
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                            disabled={currentPage === 1}
-                                        />
-                                    </PaginationItem>
-                                    {Array.from({ length: catalogItems.totalPages }, (_, i) => i + 1).map((page) => (
-                                        <PaginationItem key={page}>
-                                            <PaginationLink
-                                                onClick={() => handlePageChange(page)}
-                                                isActive={currentPage === page}
-                                            >
-                                                {page}
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                    ))}
-                                    <PaginationItem>
-                                        <PaginationNext
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === catalogItems.totalPages}
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-card">
-                        <CardHeader>
-                            <CardTitle>Regalos Seleccionados</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                                <Droppable droppableId="selected-gifts">
-                                    {(provided) => (
-                                        <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-                                            {selectedGifts.map((item, index) => (
-                                                <Draggable key={item.id} draggableId={item.id} index={index}>
-                                                    {(provided) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
+                        )}
+                    </CardContent>
+                </Card>
+                <Card className="bg-card">
+                    <CardHeader>
+                        <CardTitle>Regalos Seleccionados</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+                            {selectedGifts.map((item, index) => (
+                                <div key={item.id}>
+                                    <Card className="bg-card">
+                                        <CardContent className="flex items-center justify-between py-4">
+                                            <div className="flex items-center space-x-4">
+                                                <Gift className="h-6 w-4 text-primary" />
+                                                <div>
+                                                    <h3 className="font-semibold">{item.name}</h3>
+                                                    <p className="text-sm text-muted-foreground">Bs {(item.price).toFixed(2)}</p>
+                                                    {item.referenceUrl && (
+                                                        <a
+                                                            href={item.referenceUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm text-blue-500 hover:underline"
                                                         >
-                                                            <Card className="bg-card">
-                                                                <CardContent className="flex items-center justify-between py-4">
-                                                                    <div className="flex items-center space-x-4">
-                                                                        <Gift className="h-6 w-4 text-primary" />
-                                                                        <div>
-                                                                            <h3 className="font-semibold">{item.name}</h3>
-                                                                            <p className="text-sm text-muted-foreground">Bs {(item.price * 6.96).toFixed(2)}</p>
-                                                                            {item.referenceUrl && (
-                                                                                <a
-                                                                                    href={item.referenceUrl}
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    className="text-sm text-blue-500 hover:underline"
-                                                                                >
-                                                                                    Ver referencia
-                                                                                </a>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <Input
-                                                                            type="number"
-                                                                            min="1"
-                                                                            value={item.quantity || 1}
-                                                                            onChange={(e) => {
-                                                                                const newQuantity = parseInt(e.target.value);
-                                                                                if (newQuantity > 0) {
-                                                                                    setSelectedGifts(prevGifts =>
-                                                                                        prevGifts.map(gift =>
-                                                                                            gift.id === item.id ? { ...gift, quantity: newQuantity } : gift
-                                                                                        )
-                                                                                    );
-                                                                                }
-                                                                            }}
-                                                                            className="w-16 text-center"
-                                                                        />
-                                                                        <Button variant="destructive" size="icon" onClick={() => removeGift(item.id)}>
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </div>
-                                                                </CardContent>
-                                                            </Card>
-                                                        </div>
+                                                            Ver referencia
+                                                        </a>
                                                     )}
-                                                </Draggable>
-                                            ))}
-                                            {provided.placeholder}
-                                        </div>
-                                    )}
-                                </Droppable>
-                            </ScrollArea>
-                            <Alert className="mt-4">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Resumen de la Lista de Regalos</AlertTitle>
-                                <AlertDescription>
-                                    Valor Total de Regalos: <span className={totalGiftValue > suggestedTotalAmount ? "text-red-500" : "text-green-500"}>Bs {(totalGiftValue * 6.96).toFixed(2)}</span><br />
-                                    Monto Total Sugerido: Bs {(suggestedTotalAmount * 6.96).toFixed(2)} (basado en {guestCount} invitados a Bs {(minContribution * 6.96).toFixed(2)} cada uno)
-                                </AlertDescription>
-                            </Alert>
-                            <Button
-                                onClick={() => setIsCustomProductModalOpen(true)}
-                                className="mt-4 w-full"
-                            >
-                                Agregar Producto Personalizado
-                            </Button> {/* Added button to open custom product modal */}
-                        </CardContent>
-                    </Card>
-                </div>
-                {selectedItem && (
-                    <ItemDetailsModal
-                        item={selectedItem}
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                    />
-                )}
-                <CustomProductModal // Added CustomProductModal component
-                    isOpen={isCustomProductModalOpen}
-                    onClose={() => setIsCustomProductModalOpen(false)}
-                    onAddProduct={handleAddCustomProduct}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity || 1}
+                                                    onChange={(e) => {
+                                                        const newQuantity = parseInt(e.target.value);
+                                                        if (newQuantity > 0) {
+                                                            setSelectedGifts(prevGifts =>
+                                                                prevGifts.map(gift =>
+                                                                    gift.id === item.id ? { ...gift, quantity: newQuantity } : gift
+                                                                )
+                                                            );
+                                                        }
+                                                    }}
+                                                    className="w-16 text-center"
+                                                />
+                                                <Button variant="destructive" size="icon" onClick={() => removeGift(item.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            ))}
+                        </ScrollArea>
+                        <Alert className="mt-4">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Resumen de la Lista de Regalos</AlertTitle>
+                            <AlertDescription>
+                                Valor Total de Regalos: <span className={totalGiftValue > suggestedTotalAmount ? "text-red-500" : "text-green-500"}>Bs {(totalGiftValue).toFixed(2)}</span><br />
+                                Monto Total Sugerido: Bs {(suggestedTotalAmount).toFixed(2)} (basado en {guestCount} invitados a Bs {(minContribution).toFixed(2)} cada uno)
+                            </AlertDescription>
+                        </Alert>
+                        <Button
+                            onClick={() => setIsCustomProductModalOpen(true)}
+                            className="mt-4 w-full"
+                        >
+                            Agregar Producto Personalizado
+                        </Button> {/* Added button to open custom product modal */}
+                    </CardContent>
+                </Card>
+            </div>
+            {selectedItem && (
+                <ItemDetailsModal
+                    item={selectedItem}
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
                 />
-            </DragDropContext>
+            )}
+            <CustomProductModal // Added CustomProductModal component
+                isOpen={isCustomProductModalOpen}
+                onClose={() => setIsCustomProductModalOpen(false)}
+                onAddProduct={handleAddCustomProduct}
+            />
             <div className="mt-8 flex justify-between">
                 <Button onClick={onBack} variant="outline">Atrás</Button>
                 <Button onClick={handleSaveAndNext}>Siguiente</Button>

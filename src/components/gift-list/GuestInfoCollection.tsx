@@ -21,7 +21,7 @@ interface GuestInfoCollectionProps {
 
 export function GuestInfoCollection({ onSubmit, onBack, onNext, onGuestCountChange, onMinContributionChange }: GuestInfoCollectionProps) {
     const [guestCount, setGuestCount] = useState<number>(0)
-    const [minContribution, setMinContribution] = useState<number>(10)
+    const [minContribution, setMinContribution] = useState<number>(200)
 
     const handleGuestCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const count = parseInt(e.target.value, 10)

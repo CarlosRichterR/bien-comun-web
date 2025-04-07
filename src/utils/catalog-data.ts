@@ -4,7 +4,7 @@ export type CatalogItem = {
   price: number;
   category: string;
   imageUrl: string;
-  vendor: string;
+  supplier: string;
   referenceUrl?: string; // Add this line
 };
 
@@ -23,7 +23,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 49.99,
     category: "Kitchen",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "KitchenWare",
+    supplier: "KitchenWare",
   },
   {
     id: "item-2",
@@ -31,7 +31,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 29.99,
     category: "Kitchen",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "HomeAppliances",
+    supplier: "HomeAppliances",
   },
   {
     id: "item-3",
@@ -39,7 +39,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 79.99,
     category: "Kitchen",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "CoffeeLovers",
+    supplier: "CoffeeLovers",
   },
   {
     id: "item-4",
@@ -47,7 +47,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 89.99,
     category: "Bedroom",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "SweetDreams",
+    supplier: "SweetDreams",
   },
   {
     id: "item-5",
@@ -55,7 +55,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 24.99,
     category: "Living Room",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "CozyHome",
+    supplier: "CozyHome",
   },
   {
     id: "item-6",
@@ -63,7 +63,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 19.99,
     category: "Decor",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "FrameIt",
+    supplier: "FrameIt",
   },
   {
     id: "item-7",
@@ -71,7 +71,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 129.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "BabyTech",
+    supplier: "BabyTech",
   },
   {
     id: "item-8",
@@ -79,7 +79,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 59.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "BabyEssentials",
+    supplier: "BabyEssentials",
   },
   {
     id: "item-9",
@@ -87,7 +87,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 199.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "BabyOnTheGo",
+    supplier: "BabyOnTheGo",
   },
   {
     id: "item-10",
@@ -95,7 +95,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 39.99,
     category: "Entertainment",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "FunAndGames",
+    supplier: "FunAndGames",
   },
   {
     id: "item-11",
@@ -103,7 +103,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 299.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "BabyDreams",
+    supplier: "BabyDreams",
   },
   {
     id: "item-12",
@@ -111,7 +111,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 89.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "BabyDining",
+    supplier: "BabyDining",
   },
   {
     id: "item-13",
@@ -119,7 +119,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 19.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "BabyFeeding",
+    supplier: "BabyFeeding",
   },
   {
     id: "item-14",
@@ -127,7 +127,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 9.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "BabyComfort",
+    supplier: "BabyComfort",
   },
   {
     id: "item-15",
@@ -135,7 +135,7 @@ const allCatalogItems: CatalogItem[] = [
     price: 49.99,
     category: "Baby",
     imageUrl: "/placeholder.svg?height=100&width=100",
-    vendor: "TinyFashion",
+    supplier: "TinyFashion",
   },
 ];
 
@@ -159,12 +159,12 @@ export const fetchCatalogItems = (
       (item) =>
         item.name.toLowerCase().includes(lowercaseSearchTerm) ||
         item.category.toLowerCase().includes(lowercaseSearchTerm) ||
-        item.vendor.toLowerCase().includes(lowercaseSearchTerm)
+        item.supplier.toLowerCase().includes(lowercaseSearchTerm)
     );
   }
 
   if (vendor && vendor !== "All") {
-    filteredItems = filteredItems.filter((item) => item.vendor === vendor);
+    filteredItems = filteredItems.filter((item) => item.supplier === vendor);
   }
 
   if (priceRange) {

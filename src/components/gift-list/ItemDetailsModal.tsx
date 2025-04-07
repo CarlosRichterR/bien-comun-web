@@ -77,7 +77,7 @@ export function ItemDetailsModal({ item, isOpen, onClose }: ItemDetailsModalProp
                         </div>
                         <div className="flex justify-between">
                             <span className="font-bold">Marca:</span>
-                            <span>{item.vendor}</span>
+                            <span>{item.supplier}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="font-bold">Modelo:</span>

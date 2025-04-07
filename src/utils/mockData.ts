@@ -27,7 +27,7 @@ export const mockPublishedListData: CatalogItem[] = [
     price: 1500,
     category: "Electrodomésticos",
     imageUrl: "/placeholder.svg?height=200&width=200",
-    vendor: "ElectroHogar",
+    supplier: "ElectroHogar",
     contributedAmount: 1000,
   },
   {
@@ -36,7 +36,7 @@ export const mockPublishedListData: CatalogItem[] = [
     price: 1000,
     category: "Electrodomésticos",
     imageUrl: "/placeholder.svg?height=200&width=200",
-    vendor: "ElectroHogar",
+    supplier: "ElectroHogar",
     contributedAmount: 800,
   },
   {
@@ -45,7 +45,7 @@ export const mockPublishedListData: CatalogItem[] = [
     price: 500,
     category: "Electrodomésticos",
     imageUrl: "/placeholder.svg?height=200&width=200",
-    vendor: "ElectroHogar",
+    supplier: "ElectroHogar",
     contributedAmount: 500,
   },
   {
@@ -54,7 +54,7 @@ export const mockPublishedListData: CatalogItem[] = [
     price: 1200,
     category: "Muebles",
     imageUrl: "/placeholder.svg?height=200&width=200",
-    vendor: "MuebleríaElegante",
+    supplier: "MuebleríaElegante",
     contributedAmount: 700,
   },
   {
@@ -63,7 +63,7 @@ export const mockPublishedListData: CatalogItem[] = [
     price: 800,
     category: "Electrónica",
     imageUrl: "/placeholder.svg?height=200&width=200",
-    vendor: "TechStore",
+    supplier: "TechStore",
     contributedAmount: 500,
   },
 ];
