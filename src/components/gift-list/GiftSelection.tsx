@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Gift, Trash2, Search, AlertCircle, MoreVertical, Plus } from 'lucide-react'
+import { Gift, Trash2, Search, AlertCircle, MoreVertical, Plus, Filter } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -30,7 +30,7 @@ import { fetchCatalogItems, categories, CatalogItem, PaginatedResponse } from ".
 import { EventType } from "./EventTypeSelection"
 import { ItemDetailsModal } from './ItemDetailsModal'
 import { CustomProductModal } from './CustomProductModal'
-
+import { MultiSelect } from "../ui-custom/multi-select"; 
 interface GiftSelectionProps {
     eventType: EventType | null;
     customEventType?: string;
@@ -38,9 +38,10 @@ interface GiftSelectionProps {
     initialStatus?: 'draft' | 'published';
     onSave: (items: CatalogItem[], status: 'draft' | 'published') => void;
     guestCount: number;
-    minContribution: number; // Added minContribution prop
+    minContribution: number;
     onBack: () => void;
     onNext: () => void;
+    onSelectedGiftsChange?: (selectedGifts: CatalogItem[]) => void; // Nueva prop
 }
 
 export function GiftSelection({
@@ -50,11 +51,20 @@ export function GiftSelection({
     initialStatus = 'draft',
     onSave,
     guestCount,
-    minContribution, // Added minContribution parameter
+    minContribution,
     onBack,
-    onNext
+    onNext,
+    onSelectedGiftsChange, // Nueva prop
 }: GiftSelectionProps) {
     const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([]);
+
+    // Llama a onSelectedGiftsChange cada vez que selectedGifts cambie
+    useEffect(() => {
+        if (typeof onSelectedGiftsChange === "function") {
+            onSelectedGiftsChange(selectedGifts);
+        }
+    }, [selectedGifts, onSelectedGiftsChange]);
+
     const [catalogItems, setCatalogItems] = useState<PaginatedResponse>({
         items: [],
         totalItems: 0,
@@ -68,13 +78,16 @@ export function GiftSelection({
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
-    const [vendors, setVendors] = useState<string[]>([]);
+    const [vendors, setVendors] = useState<{ label: string; value: string }[]>([]);
     const [selectedVendor, setSelectedVendor] = useState<string>('Todos');
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCustomProductModalOpen, setIsCustomProductModalOpen] = useState(false);
     const [loading, setLoading] = useState(false); // Estado de carga
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false); // State to toggle advanced filters
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // State for selected categories
+    const [selectedVendors, setSelectedVendors] = useState<string[]>([]); // State for selected vendors
 
     const totalGiftValue = selectedGifts.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
     const suggestedTotalAmount = guestCount * minContribution;
@@ -134,6 +147,34 @@ export function GiftSelection({
         };
 
         fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        const fetchSuppliers = async () => {
+            try {
+                const response = await fetch(`${process.env.API_URL}/api/suppliers`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch suppliers');
+                }
+
+                const data = await response.json();
+                const supplierOptions = data.map((supplier: { id: number; name: string }) => ({
+                    label: supplier.name,
+                    value: supplier.id.toString(),
+                }));
+                setVendors(supplierOptions); // Update the vendors state
+            } catch (error) {
+                console.error('Error fetching suppliers:', error);
+            }
+        };
+
+        fetchSuppliers();
     }, []);
 
     const addGiftToList = (item: CatalogItem) => {
@@ -241,95 +282,151 @@ export function GiftSelection({
                 <Card className="bg-card">
                     <CardHeader>
                         <CardTitle>Catálogo de Regalos</CardTitle>
-                        <div className="relative">
+                        <div className="relative flex items-center">
                             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500" />
                             <Input
                                 type="text"
                                 placeholder="Buscar regalos..."
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                className="pl-8"
+                                className="pl-8 flex-1"
                             />
+                            <div className="ml-2">
+                                <Button
+                                    variant={showAdvancedFilters ? "secondary" : "outline"} // Cambia el estilo según el estado
+                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                    className={`p-2 ${showAdvancedFilters ? "bg-primary text-white" : ""}`} // Estilos adicionales para el estado activo
+                                    title="Filtro avanzado" // Tooltip para accesibilidad
+                                >
+                                    <Filter className="h-5 w-5" />
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent>
+                        {showAdvancedFilters && (
+                            <div
+                                className="space-y-4 border rounded-md p-4 bg-gray-100 transition-all duration-300 ease-in-out transform scale-95 opacity-0 animate-fade-in"
+                            >
+                                {/* Filter by Category */}
+                                <div className="flex flex-col space-y-2">
+                                    <label htmlFor="category-select" className="text-sm font-medium">
+                                        Filtrar por Categoría
+                                    </label>
+                                    <MultiSelect
+                                        id="category-select"
+                                        options={categories.map((category) => ({ label: category, value: category }))}
+                                        selectedValues={selectedCategories}
+                                        onSelectionChange={setSelectedCategories}
+                                        placeholder="Seleccionar categorías"
+                                    />
+                                </div>
+
+                                {/* Filter by Vendor */}
+                                <div className="flex flex-col space-y-2">
+                                    <label htmlFor="vendor-select" className="text-sm font-medium">
+                                        Filtrar por Vendedor
+                                    </label>
+                                    <MultiSelect
+                                        id="vendor-select"
+                                        options={vendors}
+                                        selectedValues={selectedVendors}
+                                        onSelectionChange={setSelectedVendors}
+                                        placeholder="Seleccionar vendedores"
+                                    />
+                                </div>
+
+                                {/* Filter by Price Range */}
+                                <div className="space-y-2">
+                                    <label htmlFor="price-range" className="text-sm font-medium">
+                                        Rango de Precios: Bs {(priceRange[0] * 6.96).toFixed(2)} - Bs {(priceRange[1] * 6.96).toFixed(2)}
+                                    </label>
+                                    <div className="flex items-center space-x-4">
+                                        <Input
+                                            type="number"
+                                            value={priceRange[0]}
+                                            onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                                            className="w-20"
+                                        />
+                                        <div className="flex-1 px-2">
+                                            <Slider
+                                                min={0}
+                                                max={1000}
+                                                step={10}
+                                                value={priceRange}
+                                                onValueChange={setPriceRange}
+                                                className="relative flex items-center select-none touch-none w-full"
+                                            />
+                                        </div>
+                                        <Input
+                                            type="number"
+                                            value={priceRange[1]}
+                                            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                                            className="w-20"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Productos */}
                         {loading ? (
-                            // Mostrar un indicador de carga mientras los datos están siendo obtenidos
                             <div className="flex justify-center items-center h-[400px]">
-                                <p>Cargando productos...</p> {/* Puedes reemplazar esto con un spinner si lo prefieres */}
+                                <p>Cargando productos...</p>
                             </div>
                         ) : (
-                            <Tabs value={currentCategory} onValueChange={setCurrentCategory}>
-                                <TabsList className="flex flex-wrap gap-2 mb-6 justify-start">
-                                    {loadingCategories ? (
-                                        <p>Cargando categorías...</p> // Show loading message while fetching
-                                    ) : (
-                                        categories.map((category) => (
-                                            <TabsTrigger
-                                                key={category}
-                                                value={category}
-                                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-4 py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary data-[state=active]:bg-primary data-[state=active]:text-white"
-                                            >
-                                                {category}
-                                            </TabsTrigger>
-                                        ))
-                                    )}
-                                </TabsList>
-                                <TabsContent value={currentCategory} className="mt-6">
-                                    <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                                        {catalogItems.items && catalogItems.items.length > 0 ? (
-                                            catalogItems.items.map((item, index) => (
-                                                <div key={item.id}>
-                                                    <Card className="bg-card cursor-pointer">
-                                                        <CardContent className="flex items-center p-4">
-                                                            <div
-                                                                className="flex items-center flex-grow cursor-pointer"
-                                                                onClick={() => handleItemClick(item)}
-                                                            >
-                                                                <Image
-                                                                    src={item.imageUrl || "/assets/images/gift.svg"}
-                                                                    alt={item.name || "Imagen del producto"}
-                                                                    width={50}
-                                                                    height={50}
-                                                                    className="rounded-md mr-4"
-                                                                />
-                                                                <div>
-                                                                    <h3 className="font-semibold">{item.name}</h3>
-                                                                    <p className="text-sm text-muted-foreground">
-                                                                        Bs {(item.price).toFixed(2)}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                        <span className="sr-only">Abrir menú</span>
-                                                                        <MoreVertical className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end">
-                                                                    <DropdownMenuItem onClick={() => addGiftToList(item)}>
-                                                                        <Plus className="mr-2 h-4 w-4" />
-                                                                        Agregar a Lista de Regalos
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        </CardContent>
-                                                    </Card>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p>No hay productos disponibles.</p> // Mensaje alternativo si no hay productos
-                                        )}
-                                    </ScrollArea>
-                                </TabsContent>
-                            </Tabs>
+                            <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+                                {catalogItems.items && catalogItems.items.length > 0 ? (
+                                    catalogItems.items.map((item, index) => (
+                                        <div key={item.id}>
+                                            <Card className="bg-card cursor-pointer">
+                                                <CardContent className="flex items-center p-4">
+                                                    <div
+                                                        className="flex items-center flex-grow cursor-pointer"
+                                                        onClick={() => handleItemClick(item)}
+                                                    >
+                                                        <Image
+                                                            src={item.imageUrl || "/assets/images/gift.svg"}
+                                                            alt={item.name || "Imagen del producto"}
+                                                            width={50}
+                                                            height={50}
+                                                            className="rounded-md mr-4"
+                                                        />
+                                                        <div>
+                                                            <h3 className="font-semibold">{item.name}</h3>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Bs {(item.price).toFixed(2)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                <span className="sr-only">Abrir menú</span>
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem onClick={() => addGiftToList(item)}>
+                                                                <Plus className="mr-2 h-4 w-4" />
+                                                                Agregar a Lista de Regalos
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No hay productos disponibles.</p>
+                                )}
+                            </ScrollArea>
                         )}
                     </CardContent>
                 </Card>
                 <Card className="bg-card">
                     <CardHeader>
-                        <CardTitle>Regalos Seleccionados</CardTitle>
+                        <CardTitle>Artículos Seleccionados</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[400px] w-full rounded-md border p-4">

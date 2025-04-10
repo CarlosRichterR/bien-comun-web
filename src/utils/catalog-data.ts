@@ -5,6 +5,7 @@ export type CatalogItem = {
   category: string;
   imageUrl: string;
   supplier: string;
+  quantity?: number;
   referenceUrl?: string; // Add this line
 };
 

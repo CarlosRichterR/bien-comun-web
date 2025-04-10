@@ -88,32 +88,36 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         const draftData = {
             eventTypeDTO: {
                 eventType: eventType as number,
-                customEventType
+                customEventType,
             },
             guestCount,
             minContribution,
-            listStatus
-        }
+            listStatus,
+            products: selectedGifts.map((gift) => ({
+                productId: gift.id,
+                quantity: gift.quantity || 1, // Default to 1 if quantity is not defined
+            })),
+        };
 
         try {
             const response = await fetch(`${process.env.API_URL}/api/List`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(draftData)
-            })
+                body: JSON.stringify(draftData),
+            });
 
             if (!response.ok) {
-                throw new Error('Failed to save draft')
+                throw new Error('Failed to save draft');
             }
 
-            // const result = await response.json()
-            // console.log('Draft saved successfully:', result)
-            // localStorage.setItem('giftListDraft', JSON.stringify(draftData))
-            onExit()
+            // const result = await response.json();
+            // console.log('Draft saved successfully:', result);
+            // localStorage.setItem('giftListDraft', JSON.stringify(draftData));
+            onExit();
         } catch (error) {
-            console.error('Error saving draft:', error)
+            console.error('Error saving draft:', error);
             // Handle error (e.g., show a notification to the user)
         }
     }
@@ -219,6 +223,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                             minContribution={minContribution}
                             onBack={handleBack}
                             onNext={handleNext}
+                            onSelectedGiftsChange={setSelectedGifts} // Actualiza el estado en GiftListCreationProcess
                         />
                     )}
                     {currentStep === "list-details" && (
