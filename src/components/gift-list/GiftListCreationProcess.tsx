@@ -76,12 +76,12 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     }
 
     const handleGuestInfoUpdate = (count: number) => {
-        setGuestCount(count)
-    }
+        setGuestCount(count);
+    };
 
     const handleMinContributionUpdate = (minContrib: number) => {
-        setMinContribution(minContrib)
-    }
+        setMinContribution(minContrib);
+    };
 
     const handleExit = async () => {
         // Save as draft logic here
@@ -205,11 +205,12 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     )}
                     {currentStep === "guest-info" && (
                         <GuestInfoCollection
-                            onSubmit={handleGuestInfoSubmitted}
-                            onBack={handleBack}
-                            onNext={handleNext}
-                            onGuestCountChange={handleGuestInfoUpdate}
-                            onMinContributionChange={handleMinContributionUpdate}
+                            guestCount={guestCount} // Pasar guestCount como prop
+                            minContribution={minContribution} // Pasar minContribution como prop
+                            onSubmit={handleGuestInfoSubmitted} // Manejar el envío de datos
+                            onBack={handleBack} // Manejar el retroceso
+                            onGuestCountChange={handleGuestInfoUpdate} // Actualizar guestCount
+                            onMinContributionChange={handleMinContributionUpdate} // Actualizar minContribution
                         />
                     )}
                     {currentStep === "gift-selection" && (

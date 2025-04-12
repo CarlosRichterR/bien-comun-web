@@ -1,47 +1,29 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { InfoIcon } from 'lucide-react'
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoIcon } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-interface GuestInfoCollectionProps {
-    onSubmit: (guestCount: number, minContribution: number) => void;
+export function GuestInfoCollection({
+    guestCount,
+    minContribution,
+    onSubmit,
+    onBack,
+    onGuestCountChange,
+    onMinContributionChange,
+}: {
+    guestCount: number;
+    minContribution: number;
+    onSubmit: (count: number, minContrib: number) => void;
     onBack: () => void;
-    onNext: () => void;
-    onGuestCountChange: (count: number) => void; // Nueva prop
-    onMinContributionChange: (minContrib: number) => void; // Nueva prop
-}
-
-export function GuestInfoCollection({ onSubmit, onBack, onNext, onGuestCountChange, onMinContributionChange }: GuestInfoCollectionProps) {
-    const [guestCount, setGuestCount] = useState<number>(0)
-    const [minContribution, setMinContribution] = useState<number>(200)
-
-    const handleGuestCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const count = parseInt(e.target.value, 10)
-        setGuestCount(count)
-        onGuestCountChange(count) // Llamar a la función de actualización
-    }
-
-    const handleMinContributionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const minContrib = parseFloat(e.target.value)
-        setMinContribution(minContrib)
-        onMinContributionChange(minContrib) // Llamar a la función de actualización
-    }
-
+    onGuestCountChange: (count: number) => void;
+    onMinContributionChange: (minContrib: number) => void;
+}) {
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (guestCount > 0 && minContribution >= 0) {
-            onSubmit(guestCount, minContribution)
-            onNext()
-        }
-    }
+        e.preventDefault();
+        onSubmit(guestCount, minContribution);
+    };
 
     return (
         <Card className="w-full max-w-md mx-auto">
@@ -58,7 +40,8 @@ export function GuestInfoCollection({ onSubmit, onBack, onNext, onGuestCountChan
                             type="number"
                             min="1"
                             value={guestCount || ''}
-                            onChange={handleGuestCountChange}
+                            onChange={(e) => onGuestCountChange(Number(e.target.value))}
+                            placeholder="Ingrese el número de invitados"
                             required
                         />
                     </div>
@@ -82,17 +65,20 @@ export function GuestInfoCollection({ onSubmit, onBack, onNext, onGuestCountChan
                             min="0"
                             step="0.01"
                             value={minContribution || ''}
-                            onChange={handleMinContributionChange}
+                            onChange={(e) => onMinContributionChange(Number(e.target.value))}
+                            placeholder="Ingrese la contribución mínima"
                             required
                         />
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                    <Button type="button" variant="outline" onClick={onBack}>Atrás</Button>
+                    <Button type="button" variant="outline" onClick={onBack}>
+                        Atrás
+                    </Button>
                     <Button type="submit">Siguiente</Button>
                 </CardFooter>
             </form>
         </Card>
-    )
+    );
 }
 
