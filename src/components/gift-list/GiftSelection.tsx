@@ -42,6 +42,7 @@ interface GiftSelectionProps {
     onBack: () => void;
     onNext: () => void;
     onSelectedGiftsChange?: (selectedGifts: CatalogItem[]) => void; // Nueva prop
+    selectedGiftsFather: CatalogItem[];
 }
 
 export function GiftSelection({
@@ -54,13 +55,20 @@ export function GiftSelection({
     minContribution,
     onBack,
     onNext,
-    onSelectedGiftsChange, // Nueva prop
+    onSelectedGiftsChange,
+    selectedGiftsFather // Nueva prop
 }: GiftSelectionProps) {
-    const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([]);
+
+    const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>(selectedGiftsFather || []);
+
+    // // Sincroniza el estado local con los cambios en selectedGiftsFather
+    // useEffect(() => {
+    //     setSelectedGifts(selectedGiftsFather);
+    // }, [selectedGiftsFather]);
 
     // Llama a onSelectedGiftsChange cada vez que selectedGifts cambie
     useEffect(() => {
-        if (typeof onSelectedGiftsChange === "function") {
+        if (typeof onSelectedGiftsChange === "function") {  
             onSelectedGiftsChange(selectedGifts);
         }
     }, [selectedGifts, onSelectedGiftsChange]);
@@ -89,7 +97,9 @@ export function GiftSelection({
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // State for selected categories
     const [selectedVendors, setSelectedVendors] = useState<string[]>([]); // State for selected vendors
 
-    const totalGiftValue = selectedGifts.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
+    const totalGiftValue = Array.isArray(selectedGifts)
+        ? selectedGifts.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
+        : 0;
     const suggestedTotalAmount = guestCount * minContribution;
 
     useEffect(() => {
@@ -191,7 +201,9 @@ export function GiftSelection({
             setSelectedGifts(prevGifts => prevGifts.filter(gift => gift.id !== id));
             setCatalogItems(prevCatalog => ({
                 ...prevCatalog,
-                items: [...prevCatalog.items, removedGift],
+                items: prevCatalog.items.some(item => item.id === removedGift.id)
+                    ? prevCatalog.items // Si ya existe, no lo agregues de nuevo
+                    : [...prevCatalog.items, removedGift], // Agrega solo si no existe
             }));
         }
     };
@@ -430,7 +442,7 @@ export function GiftSelection({
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                            {selectedGifts.map((item, index) => (
+                            {Array.isArray(selectedGifts) && selectedGifts.map((item, index) => (
                                 <div key={item.id}>
                                     <Card className="bg-card">
                                         <CardContent className="flex items-center justify-between py-4">

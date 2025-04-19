@@ -34,7 +34,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     const [customEventType, setCustomEventType] = useState<string | undefined>()
     const [guestCount, setGuestCount] = useState<number>(0)
     const [contributionPerGuest, setContributionPerGuest] = useState<number>(0)
-    const [minContribution, setMinContribution] = useState<number>(10)
+    const [minContribution, setMinContribution] = useState<number>(200)
     const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([])
     const [listDetails, setListDetails] = useState<any>(null)
     const [confirmationData, setConfirmationData] = useState<any>(null)
@@ -81,6 +81,10 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
 
     const handleMinContributionUpdate = (minContrib: number) => {
         setMinContribution(minContrib);
+    };
+
+    const handleSelectedGiftsChange = (gifts: CatalogItem[]) => {
+        setSelectedGifts(gifts);
     };
 
     const handleExit = async () => {
@@ -224,7 +228,8 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                             minContribution={minContribution}
                             onBack={handleBack}
                             onNext={handleNext}
-                            onSelectedGiftsChange={setSelectedGifts} // Actualiza el estado en GiftListCreationProcess
+                            onSelectedGiftsChange={handleSelectedGiftsChange}
+                            selectedGiftsFather={selectedGifts || []} // Pasar la función como prop
                         />
                     )}
                     {currentStep === "list-details" && (
