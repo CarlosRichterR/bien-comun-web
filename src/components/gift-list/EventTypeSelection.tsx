@@ -14,50 +14,44 @@ export enum EventType {
 }
 
 interface EventTypeSelectionProps {
-    eventType: EventType; // Nueva prop
+    eventType: EventType;
     onEventTypeSelected: (eventType: EventType, customEventType?: string) => void;
     onNext: () => void;
     onBack: () => void;
-    onEventTypeChange: (eventType: EventType) => void;
-    onCustomEventTypeChange: (customEventType: string) => void;
 }
 
-export function EventTypeSelection({ eventType, onEventTypeSelected, onNext, onBack, onEventTypeChange, onCustomEventTypeChange }: EventTypeSelectionProps) {
-    const [selectedType, setSelectedType] = useState<EventType>(eventType)
-    const [customEventType, setCustomEventType] = useState("")
+export function EventTypeSelection({ eventType, onEventTypeSelected, onNext, onBack }: EventTypeSelectionProps) {
+    const [selectedType, setSelectedType] = useState<EventType>(eventType);
+    const [customEventType, setCustomEventType] = useState("");
 
     useEffect(() => {
-        setSelectedType(eventType)
-    }, [eventType])
+        setSelectedType(eventType);
+    }, [eventType]);
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
+        e.preventDefault();
         if (selectedType === EventType.Other && !customEventType.trim()) {
-            return // Don't submit if "Otro" is selected but no custom type is entered
+            return; // Don't submit if "Otro" is selected but no custom type is entered
         }
-        onEventTypeSelected(selectedType, selectedType === EventType.Other ? customEventType : undefined)
-        onNext()
-    }
+        onEventTypeSelected(selectedType, selectedType === EventType.Other ? customEventType : undefined);
+        onNext();
+    };
 
     const handleGoToDashboard = () => {
         onBack();
-    }
+    };
 
     const handleCustomEventTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value
-        setCustomEventType(value)
-        if (value !== customEventType) {
-            onCustomEventTypeChange(value)
-        }
-    }
+        const value = e.target.value;
+        setCustomEventType(value);
+        onEventTypeSelected(selectedType, value); // Llama a onEventTypeSelected con el valor actualizado
+    };
 
     const handleEventTypeChange = (value: string) => {
-        const eventType = parseInt(value) as EventType
-        setSelectedType(eventType)
-        if (eventType !== selectedType) {
-            onEventTypeChange(eventType)
-        }
-    }
+        const eventType = parseInt(value) as EventType;
+        setSelectedType(eventType);
+        onEventTypeSelected(eventType, eventType === EventType.Other ? customEventType : undefined); // Llama a onEventTypeSelected
+    };
 
     return (
         <Card className="w-full max-w-md mx-auto bg-card">
@@ -110,6 +104,6 @@ export function EventTypeSelection({ eventType, onEventTypeSelected, onNext, onB
                 </CardFooter>
             </form>
         </Card>
-    )
+    );
 }
 

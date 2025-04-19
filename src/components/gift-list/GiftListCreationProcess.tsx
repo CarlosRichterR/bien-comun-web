@@ -67,14 +67,6 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         }
     }
 
-    const handleEventTypeUpdate = (type: EventType) => {
-        setEventType(type)
-    }
-
-    const handleCustomEventTypeUpdate = (customType: string) => {
-        setCustomEventType(customType)
-    }
-
     const handleGuestInfoUpdate = (count: number) => {
         setGuestCount(count);
     };
@@ -203,8 +195,6 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                             onEventTypeSelected={handleEventTypeSelected}
                             onNext={handleNext}
                             onBack={onBack}
-                            onEventTypeChange={handleEventTypeUpdate}
-                            onCustomEventTypeChange={handleCustomEventTypeUpdate}
                         />
                     )}
                     {currentStep === "guest-info" && (
