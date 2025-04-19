@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { EventTypeSelection, EventType } from "./EventTypeSelection"
+import { EventTypeSelection } from "./EventTypeSelection"
 import { GuestInfoCollection } from "./GuestInfoCollection"
 import { GiftSelection } from "./GiftSelection"
 import { ListDetails } from "./ListDetails"
@@ -12,14 +12,11 @@ import { CatalogItem } from "../../utils/catalog-data"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { EventTypeDTO } from "@/types/models/EventTypeDTO"
+import { EventType } from "@/types/enums/EventType"
 
 type Step = "event-selection" | "guest-info" | "gift-selection" | "list-details" | "list-confirmation"
 type ListStatus = "draft" | "publish"
-
-interface EventTypeDTO {
-    type: EventType;
-    customType?: string;
-}
 
 interface GiftListCreationProcessProps {
     onComplete: (listData: any) => void;
@@ -30,8 +27,10 @@ interface GiftListCreationProcessProps {
 export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftListCreationProcessProps) {
     const router = useRouter()
     const [currentStep, setCurrentStep] = useState<Step>("event-selection")
-    const [eventType, setEventType] = useState<EventType>(EventType.Wedding)
-    const [customEventType, setCustomEventType] = useState<string | undefined>()
+    const [eventTypeDTO, setEventTypeDTO] = useState<EventTypeDTO>({
+        type: EventType.Wedding,
+        customType: undefined,
+    });
     const [guestCount, setGuestCount] = useState<number>(0)
     const [contributionPerGuest, setContributionPerGuest] = useState<number>(0)
     const [minContribution, setMinContribution] = useState<number>(200)
@@ -83,8 +82,8 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         // Save as draft logic here
         const draftData = {
             eventTypeDTO: {
-                eventType: eventType as number,
-                customEventType,
+                eventType: eventTypeDTO.type as number,
+                customEventType: eventTypeDTO.customType,
             },
             guestCount,
             minContribution,
@@ -119,8 +118,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     }
 
     const handleEventTypeSelected = (type: EventType, custom?: string) => {
-        setEventType(type)
-        setCustomEventType(custom)
+        setEventTypeDTO({ type, customType: custom });
     }
 
     const handleGuestInfoSubmitted = (count: number, minContrib: number) => {
@@ -142,8 +140,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     const handleListConfirmation = (data: any) => {
         setConfirmationData(data)
         onComplete({
-            eventType,
-            customEventType,
+            eventTypeDTO,
             guestCount,
             minContribution,
             selectedGifts,
@@ -153,7 +150,10 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     }
 
     const loadDraft = () => {
-        setEventType(EventType.Wedding)
+        setEventTypeDTO({
+            type: EventType.Wedding,
+            customType: undefined,
+        });
     }
 
     useEffect(() => {
@@ -191,7 +191,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                 >
                     {currentStep === "event-selection" && (
                         <EventTypeSelection
-                            eventType={eventType} // Pasar eventType como prop
+                            eventTypeDTO={eventTypeDTO} // Pasar el objeto EventTypeDTO como prop
                             onEventTypeSelected={handleEventTypeSelected}
                             onNext={handleNext}
                             onBack={onBack}
@@ -209,8 +209,8 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     )}
                     {currentStep === "gift-selection" && (
                         <GiftSelection
-                            eventType={eventType}
-                            customEventType={customEventType}
+                            eventType={eventTypeDTO.type}
+                            customEventType={eventTypeDTO.customType}
                             listId={null}
                             initialStatus="draft"
                             onSave={handleGiftSelectionSave}
@@ -224,7 +224,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     )}
                     {currentStep === "list-details" && (
                         <ListDetails
-                            eventType={eventType || customEventType || ""}
+                            eventType={eventTypeDTO.type || eventTypeDTO.customType || ""}
                             onSubmit={handleListDetailsSubmitted}
                             onBack={handleBack}
                             onNext={handleNext}

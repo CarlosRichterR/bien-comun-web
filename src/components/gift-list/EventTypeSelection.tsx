@@ -5,40 +5,32 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
 import { Home } from 'lucide-react'
-
-export enum EventType {
-    Wedding = 0,
-    Birthday,
-    BabyShower,
-    Other
-}
+import { EventTypeDTO } from "@/types/models/EventTypeDTO"
+import { EventType } from "@/types/enums/EventType"
 
 interface EventTypeSelectionProps {
-    eventType: EventType;
+    eventTypeDTO: EventTypeDTO; // Cambiado para recibir el objeto completo
     onEventTypeSelected: (eventType: EventType, customEventType?: string) => void;
     onNext: () => void;
     onBack: () => void;
 }
 
-export function EventTypeSelection({ eventType, onEventTypeSelected, onNext, onBack }: EventTypeSelectionProps) {
-    const [selectedType, setSelectedType] = useState<EventType>(eventType);
-    const [customEventType, setCustomEventType] = useState("");
+export function EventTypeSelection({ eventTypeDTO, onEventTypeSelected, onNext, onBack }: EventTypeSelectionProps) {
+    const [selectedType, setSelectedType] = useState<EventType>(eventTypeDTO.type);
+    const [customEventType, setCustomEventType] = useState<string>(eventTypeDTO.customType || "");
 
     useEffect(() => {
-        setSelectedType(eventType);
-    }, [eventType]);
+        setSelectedType(eventTypeDTO.type);
+        setCustomEventType(eventTypeDTO.customType || "");
+    }, [eventTypeDTO]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedType === EventType.Other && !customEventType.trim()) {
-            return; // Don't submit if "Otro" is selected but no custom type is entered
+            return; // No enviar si "Otro" está seleccionado pero no se ingresó un tipo personalizado
         }
         onEventTypeSelected(selectedType, selectedType === EventType.Other ? customEventType : undefined);
         onNext();
-    };
-
-    const handleGoToDashboard = () => {
-        onBack();
     };
 
     const handleCustomEventTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,9 +88,8 @@ export function EventTypeSelection({ eventType, onEventTypeSelected, onNext, onB
                     )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                    <Button type="button" variant="outline" onClick={handleGoToDashboard}>
-                        <Home className="mr-2 h-4 w-4" />
-                        Ir al Inicio
+                    <Button type="button" variant="outline" onClick={onBack}>
+                        Volver
                     </Button>
                     <Button type="submit">Siguiente</Button>
                 </CardFooter>
