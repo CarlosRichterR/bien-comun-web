@@ -89,6 +89,7 @@ export function EventTypeSelection({ eventTypeDTO, onEventTypeSelected, onNext, 
                 </CardContent>
                 <CardFooter className="flex justify-between">
                     <Button type="button" variant="outline" onClick={onBack}>
+                        <Home className="mr-2 h-4 w-4" /> {/* Ícono de Home */}
                         Volver
                     </Button>
                     <Button type="submit">Siguiente</Button>

@@ -14,6 +14,7 @@ import { Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { EventTypeDTO } from "@/types/models/EventTypeDTO"
 import { EventType } from "@/types/enums/EventType"
+import { ListDetailsData } from '@/types/models/ListDetails'
 
 type Step = "event-selection" | "guest-info" | "gift-selection" | "list-details" | "list-confirmation"
 type ListStatus = "draft" | "publish"
@@ -35,7 +36,17 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     const [contributionPerGuest, setContributionPerGuest] = useState<number>(0)
     const [minContribution, setMinContribution] = useState<number>(200)
     const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([])
-    const [listDetails, setListDetails] = useState<any>(null)
+    const [listDetails, setListDetails] = useState<ListDetailsData>({
+        listName: "",
+        eventDate: new Date(),
+        campaignStartDate: new Date(),
+        campaignStartTime: "09:00",
+        campaignEndDate: new Date(),
+        campaignEndTime: "18:00",
+        location: [-17.3936, -66.157], // Coordenadas iniciales (Cochabamba, Bolivia)
+        address: "",
+    });
+    const [isAddressModified, setIsAddressModified] = useState(false);
     const [confirmationData, setConfirmationData] = useState<any>(null)
     const [userEmail, setUserEmail] = useState<string>(""); // Added state for user email
     const [userPhone, setUserPhone] = useState<string>(""); // Added state for user phone
@@ -88,6 +99,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
             guestCount,
             minContribution,
             listStatus,
+            listDetails,
             products: selectedGifts.map((gift) => ({
                 productId: gift.id,
                 quantity: gift.quantity || 1, // Default to 1 if quantity is not defined
@@ -120,6 +132,11 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     const handleEventTypeSelected = (type: EventType, custom?: string) => {
         setEventTypeDTO({ type, customType: custom });
     }
+    
+    const handleListDetailsChange = (updatedDetails: ListDetailsData) => {
+        setListDetails(updatedDetails);
+        console.log("List details updated:", updatedDetails);
+    };
 
     const handleGuestInfoSubmitted = (count: number, minContrib: number) => {
         setGuestCount(count)
@@ -225,9 +242,13 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     {currentStep === "list-details" && (
                         <ListDetails
                             eventType={eventTypeDTO.type || eventTypeDTO.customType || ""}
+                            initialDetails={listDetails}
                             onSubmit={handleListDetailsSubmitted}
                             onBack={handleBack}
                             onNext={handleNext}
+                            onChange={handleListDetailsChange}
+                            isAddressModified={isAddressModified} // Pasar la bandera
+                            setIsAddressModified={setIsAddressModified}
                         />
                     )}
                     {currentStep === "list-confirmation" && (

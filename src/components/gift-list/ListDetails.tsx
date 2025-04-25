@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css"; // Importar estilos de Leaflet
+import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 
@@ -20,54 +20,60 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { ListDetailsData } from "@/types/models/ListDetails";
 
 interface ListDetailsProps {
     eventType: string;
+    initialDetails: ListDetailsData;
     onSubmit: (listDetails: ListDetailsData) => void;
     onBack: () => void;
     onNext: () => void;
+    onChange: (updatedDetails: ListDetailsData) => void;
+    isAddressModified: boolean; // Nueva prop
+    setIsAddressModified: (value: boolean) => void;
 }
 
-interface ListDetailsData {
-    listName: string;
-    eventDate: Date;
-    campaignStartDate: Date;
-    campaignStartTime: string;
-    campaignEndDate: Date;
-    campaignEndTime: string;
-    location: [number, number]; // Coordenadas seleccionadas
-    address: string; // Dirección literal
-}
+export function ListDetails({ eventType, initialDetails, onSubmit, onBack, onNext, onChange, isAddressModified, setIsAddressModified }: ListDetailsProps) {
+    const [listDetails, setListDetails] = useState<ListDetailsData>(initialDetails);
 
-export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetailsProps) {
-    const [listName, setListName] = useState(`Mi Lista de ${eventType}`);
-    const [location, setLocation] = useState<[number, number]>([-17.3936, -66.157]); // Coordenadas iniciales (Cochabamba, Bolivia)
-    const [address, setAddress] = useState<string>(""); // Dirección literal
-    const [eventDate, setEventDate] = useState<Date>(new Date());
-    const [campaignEndDate, setCampaignEndDate] = useState<Date>(new Date());
-    const [campaignEndTime, setCampaignEndTime] = useState<string>("18:00");
+    const updateField = <K extends keyof ListDetailsData>(field: K, value: ListDetailsData[K]) => {
+        setListDetails((prev) => ({ ...prev, [field]: value }));
+
+        // Si el campo modificado es "address", activa la bandera en el padre
+        if (field === "address") {
+            setIsAddressModified(true);
+        }
+    };
 
     // Función para realizar geocodificación inversa
     const fetchAddress = async (lat: number, lng: number) => {
         try {
+            // No sobrescribir si el usuario modificó manualmente el campo
+            if (isAddressModified) return;
+
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
             );
             const data = await response.json();
             if (data && data.display_name) {
-                setAddress(data.display_name); // Actualizar la dirección literal
+                updateField("address", data.display_name); // Actualizar la dirección literal
             } else {
-                setAddress("Dirección no encontrada");
+                updateField("address", "Dirección no encontrada");
             }
         } catch (error) {
             console.error("Error al obtener la dirección:", error);
-            setAddress("Error al obtener la dirección");
+            updateField("address", "Error al obtener la dirección");
         }
     };
 
+    // Llama a onChange cada vez que listDetails cambie
+    useEffect(() => {
+        onChange(listDetails);
+    }, [listDetails, onChange]);
+
     useEffect(() => {
         // Configurar el mapa
-        const map = L.map("map").setView(location, 13); // Coordenadas iniciales y zoom
+        const map = L.map("map").setView(listDetails.location!, 13); // Coordenadas iniciales y zoom
 
         // Agregar capa base de OpenStreetMap
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -75,15 +81,15 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
         }).addTo(map);
 
         // Agregar marcador inicial
-        const marker = L.marker(location, { draggable: true }).addTo(map);
+        const marker = L.marker(listDetails.location!, { draggable: true }).addTo(map);
 
         // Obtener la dirección inicial
-        fetchAddress(location[0], location[1]);
+        fetchAddress(listDetails.location![0], listDetails.location![1]);
 
         // Actualizar la ubicación al hacer clic en el mapa
         map.on("click", (e: L.LeafletMouseEvent) => {
             const { lat, lng } = e.latlng;
-            setLocation([lat, lng]);
+            updateField("location", [lat, lng]);
             marker.setLatLng([lat, lng]); // Mover el marcador a la nueva ubicación
             fetchAddress(lat, lng); // Obtener la dirección literal
         });
@@ -91,7 +97,7 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
         // Actualizar la ubicación al arrastrar el marcador
         marker.on("dragend", () => {
             const { lat, lng } = marker.getLatLng();
-            setLocation([lat, lng]);
+            updateField("location", [lat, lng]);
             fetchAddress(lat, lng); // Obtener la dirección literal
         });
 
@@ -103,19 +109,8 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (listName && location && address) {
-            onSubmit({
-                listName,
-                eventDate,
-                campaignStartDate: new Date(),
-                campaignStartTime: "09:00",
-                campaignEndDate,
-                campaignEndTime,
-                location,
-                address,
-            });
-            onNext();
-        }
+        onSubmit(listDetails);
+        onNext();
     };
 
     return (
@@ -129,8 +124,8 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
                         <Label htmlFor="listName">Nombre de la Lista</Label>
                         <Input
                             id="listName"
-                            value={listName}
-                            onChange={(e) => setListName(e.target.value)}
+                            value={listDetails.listName}
+                            onChange={(e) => updateField("listName", e.target.value)}
                             placeholder="Ingrese el nombre de la lista"
                             required
                         />
@@ -143,12 +138,12 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
                                     variant={"outline"}
                                     className={cn(
                                         "w-full justify-start text-left font-normal",
-                                        !eventDate && "text-muted-foreground"
+                                        !listDetails.eventDate && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {eventDate
-                                        ? format(eventDate, "PPP", { locale: es })
+                                    {listDetails.eventDate
+                                        ? format(listDetails.eventDate, "PPP", { locale: es })
                                         : <span>Seleccione una fecha</span>}
                                 </Button>
                             </PopoverTrigger>
@@ -158,9 +153,10 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
                             >
                                 <Calendar
                                     mode="single"
-                                    selected={eventDate}
-                                    onSelect={setEventDate}
+                                    selected={listDetails.eventDate}
+                                    onSelect={(date) => updateField("eventDate", date!)}
                                     initialFocus
+                                    disabled={(date) => date < new Date()} // Deshabilitar fechas pasadas
                                 />
                             </PopoverContent>
                         </Popover>
@@ -174,12 +170,12 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
                                         variant={"outline"}
                                         className={cn(
                                             "w-full justify-start text-left font-normal",
-                                            !campaignEndDate && "text-muted-foreground"
+                                            !listDetails.campaignEndDate && "text-muted-foreground"
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {campaignEndDate
-                                            ? format(campaignEndDate, "PPP", { locale: es })
+                                        {listDetails.campaignEndDate
+                                            ? format(listDetails.campaignEndDate, "PPP", { locale: es })
                                             : <span>Seleccione una fecha</span>}
                                     </Button>
                                 </PopoverTrigger>
@@ -189,9 +185,10 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
                                 >
                                     <Calendar
                                         mode="single"
-                                        selected={campaignEndDate}
-                                        onSelect={setCampaignEndDate}
+                                        selected={listDetails.campaignEndDate}
+                                        onSelect={(date) => updateField("campaignEndDate", date!)}
                                         initialFocus
+                                        disabled={(date) => date < new Date()} // Deshabilitar fechas pasadas
                                     />
                                 </PopoverContent>
                             </Popover>
@@ -199,8 +196,8 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
                                 <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="time"
-                                    value={campaignEndTime}
-                                    onChange={(e) => setCampaignEndTime(e.target.value)}
+                                    value={listDetails.campaignEndTime}
+                                    onChange={(e) => updateField("campaignEndTime", e.target.value)}
                                     required
                                 />
                             </div>
@@ -210,18 +207,20 @@ export function ListDetails({ eventType, onSubmit, onBack, onNext }: ListDetails
                         <Label>Mapa</Label>
                         <div id="map" style={{ height: "300px", width: "100%" }}></div>
                         <p className="text-sm text-muted-foreground">
-                            Coordenadas seleccionadas: {location[0].toFixed(6)}, {location[1].toFixed(6)}
+                            Coordenadas seleccionadas: {listDetails.location![0].toFixed(6)}, {listDetails.location![1].toFixed(6)}
                         </p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="address">Dirección</Label>
                         <textarea
                             id="address"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)} // Permitir que el usuario edite la dirección
+                            value={listDetails.address}
+                            onChange={(e) => {
+                                updateField("address", e.target.value); // Actualiza el campo y activa el flag
+                            }}
                             placeholder="La dirección aparecerá aquí"
-                            className="w-full p-2 border rounded-md text-sm text-muted-foreground resize-none" // Estilos para el textarea
-                            rows={3} // Número de líneas visibles
+                            className="w-full p-2 border rounded-md text-sm text-muted-foreground resize-none"
+                            rows={3}
                         />
                     </div>
                 </CardContent>
