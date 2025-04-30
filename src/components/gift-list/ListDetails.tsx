@@ -205,7 +205,7 @@ export function ListDetails({ eventType, initialDetails, onSubmit, onBack, onNex
                     </div>
                     <div className="space-y-2">
                         <Label>Mapa</Label>
-                        <div id="map" style={{ height: "300px", width: "100%" }}></div>
+                        <div id="map" style={{ height: "300px", width: "100%", zIndex: 0, position: "relative" }}></div>
                         <p className="text-sm text-muted-foreground">
                             Coordenadas seleccionadas: {listDetails.location![0].toFixed(6)}, {listDetails.location![1].toFixed(6)}
                         </p>

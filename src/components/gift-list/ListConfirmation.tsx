@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,46 +28,25 @@ interface ConfirmationData {
 }
 
 export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone, initialMinContribution }: ListConfirmationProps) {
-    const [email, setEmail] = useState(initialEmail)
-    const [phone, setPhone] = useState(initialPhone)
-    const [useMinContribution, setUseMinContribution] = useState<boolean>(true)
-    const [minContribution, setMinContribution] = useState<number>(initialMinContribution)
-    const [isEditingMinContribution, setIsEditingMinContribution] = useState(false)
-    const [termsAccepted, setTermsAccepted] = useState(false)
-    const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false)
-    const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
-    const scrollAreaRef = useRef<HTMLDivElement>(null)
+    const [email, setEmail] = useState(initialEmail);
+    const [phone, setPhone] = useState(initialPhone);
+    const [useMinContribution, setUseMinContribution] = useState<boolean>(true);
+    const [minContribution, setMinContribution] = useState<number>(initialMinContribution);
+    const [isEditingMinContribution, setIsEditingMinContribution] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false);
+    const [canCheckTerms, setCanCheckTerms] = useState(false); // New state to control checkbox
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
+        e.preventDefault();
         onSubmit({
             email,
             phone,
             useMinContribution,
             minContribution,
             termsAccepted
-        })
-    }
-
-    useEffect(() => {
-        const scrollArea = scrollAreaRef.current;
-
-        if (scrollArea) {
-            const handleScroll = () => {
-                const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-                const isBottomReached = scrollTop + clientHeight >= scrollHeight - 10;
-                if (isBottomReached && !hasScrolledToBottom) {
-                    setHasScrolledToBottom(true);
-                }
-            };
-
-            scrollArea.addEventListener('scroll', handleScroll);
-
-            return () => {
-                scrollArea.removeEventListener('scroll', handleScroll);
-            };
-        }
-    }, [hasScrolledToBottom]);
+        });
+    };
 
     const termsAndConditions = `
   <h2 style="font-size: 1.5em; font-weight: bold; margin-bottom: 1em;">Términos y Condiciones de Uso</h2>
@@ -172,8 +151,12 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                         <Checkbox
                             id="terms"
                             checked={termsAccepted}
-                            onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                            disabled={!hasScrolledToBottom}
+                            onCheckedChange={(checked) => {
+                                if (canCheckTerms) {
+                                    setTermsAccepted(checked as boolean);
+                                }
+                            }}
+                            disabled={!canCheckTerms} // Disable checkbox until modal is opened
                         />
                         <Label htmlFor="terms" className="text-sm">
                             Acepto los{" "}
@@ -190,40 +173,26 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                                             Por favor, lea atentamente los siguientes términos y condiciones.
                                         </DialogDescription>
                                     </DialogHeader>
-                                    <ScrollArea className="flex-grow" ref={scrollAreaRef}>
-                                        <div className="h-[50vh] overflow-y-auto">
-                                            <div
-                                                className="p-4 text-sm"
-                                                dangerouslySetInnerHTML={{ __html: termsAndConditions }}
-                                            />
-                                        </div>
-                                    </ScrollArea>
+                                    <div className="h-[50vh] overflow-y-auto">
+                                        <div
+                                            className="p-4 text-sm"
+                                            dangerouslySetInnerHTML={{ __html: termsAndConditions }}
+                                        />
+                                    </div>
                                     <div className="mt-4 flex justify-end">
                                         <Button
                                             onClick={() => {
-                                                setIsTermsDialogOpen(false)
-                                                if (hasScrolledToBottom) {
-                                                    setTermsAccepted(true)
-                                                }
+                                                setIsTermsDialogOpen(false);
+                                                setCanCheckTerms(true); // Allow checkbox to be checked
                                             }}
-                                            disabled={!hasScrolledToBottom}
                                         >
-                                            {hasScrolledToBottom ? "Aceptar y Cerrar" : "Por favor, desplácese hasta el final"}
+                                            Aceptar y Cerrar
                                         </Button>
                                     </div>
                                 </DialogContent>
                             </Dialog>
                         </Label>
                     </div>
-                    {!termsAccepted && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Atención</AlertTitle>
-                            <AlertDescription>
-                                Debes leer y aceptar los términos y condiciones para continuar.
-                            </AlertDescription>
-                        </Alert>
-                    )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
                     <Button type="button" variant="outline" onClick={onBack}>
@@ -236,6 +205,6 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                 </CardFooter>
             </form>
         </Card>
-    )
+    );
 }
 
