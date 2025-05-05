@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { EventTypeDTO } from "@/types/models/EventTypeDTO"
 import { EventType } from "@/types/enums/EventType"
 import { ListDetailsData } from '@/types/models/ListDetails'
+import { ConfirmationData } from '@/types/models/ConfirmationData'
 
 type Step = "event-selection" | "guest-info" | "gift-selection" | "list-details" | "list-confirmation"
 type ListStatus = "draft" | "publish"
@@ -47,7 +48,12 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         address: "",
     });
     const [isAddressModified, setIsAddressModified] = useState(false);
-    const [confirmationData, setConfirmationData] = useState<any>(null)
+    const [confirmationData, setConfirmationData] = useState<ConfirmationData>({
+        email: "",
+        phone: "",
+        useMinContribution: true,
+        termsAccepted: false,
+    });
     const [userEmail, setUserEmail] = useState<string>(""); // Added state for user email
     const [userPhone, setUserPhone] = useState<string>(""); // Added state for user phone
     const [listStatus, setListStatus] = useState<ListStatus>("draft"); // Added state for list status
@@ -104,6 +110,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                 productId: gift.id,
                 quantity: gift.quantity || 1, // Default to 1 if quantity is not defined
             })),
+            confirmationData,
         };
 
         try {
@@ -154,7 +161,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         handleNext()
     }
 
-    const handleListConfirmation = (data: any) => {
+    const handleListConfirmation = (data: ConfirmationData) => {
         setConfirmationData(data)
         onComplete({
             eventTypeDTO,
@@ -165,6 +172,37 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
             confirmationData: data
         })
     }
+
+    const handleConfirmationChange = (updatedData: ConfirmationData) => {
+        setConfirmationData(updatedData);
+    };
+
+    const handleSubmit = async (confirmationData: any) => {
+        const finalData = {
+            eventTypeDTO: {
+                eventType: eventTypeDTO.type as number,
+                customEventType: eventTypeDTO.customType,
+            },
+            guestCount,
+            minContribution,
+            listStatus: 'publish' as ListStatus,
+            listDetails,
+            products: selectedGifts.map((gift) => ({
+                productId: gift.id,
+                quantity: gift.quantity || 1,
+            })),
+            email: confirmationData.email,
+            phone: confirmationData.phone,
+            useMinContribution: confirmationData.useMinContribution,
+        };
+
+        try {
+            onComplete(finalData);
+        } catch (error) {
+            console.error('Error submitting list:', error);
+            // Handle error appropriately
+        }
+    };
 
     const loadDraft = () => {
         setEventTypeDTO({
@@ -253,11 +291,12 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     )}
                     {currentStep === "list-confirmation" && (
                         <ListConfirmation
-                            onSubmit={handleListConfirmation}
+                            onSubmit={handleSubmit}
                             onBack={handleBack}
-                            initialEmail={userEmail}
-                            initialPhone={userPhone}
-                            initialMinContribution={minContribution}
+                            initialData={confirmationData}
+                            minContribution={minContribution}
+                            onMinContributionChange={handleMinContributionUpdate}
+                            onChange={handleConfirmationChange}
                         />
                     )}
                 </motion.div>

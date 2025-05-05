@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,44 +8,61 @@ import { AlertCircle, Send, Edit2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { DialogDescription } from "@/components/ui/dialog"
+import { ConfirmationData } from '@/types/models/ConfirmationData'
 
 interface ListConfirmationProps {
     onSubmit: (confirmationData: ConfirmationData) => void;
     onBack: () => void;
-    initialEmail: string;
-    initialPhone: string;
-    initialMinContribution: number;
+    initialData: ConfirmationData;
+    minContribution: number; // Nuevo prop separado
+    onMinContributionChange: (value: number) => void;
+    onChange: (updatedData: ConfirmationData) => void;
 }
 
-interface ConfirmationData {
-    email: string;
-    phone: string;
-    useMinContribution: boolean;
-    minContribution: number;
-    termsAccepted: boolean;
-}
+export function ListConfirmation({
+    onSubmit,
+    onBack,
+    initialData,
+    minContribution, // Recibe el prop
+    onMinContributionChange,
+    onChange
+}: ListConfirmationProps) {
+    const [confirmationData, setConfirmationData] = useState<ConfirmationData>(initialData);
 
-export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone, initialMinContribution }: ListConfirmationProps) {
-    const [email, setEmail] = useState(initialEmail);
-    const [phone, setPhone] = useState(initialPhone);
-    const [useMinContribution, setUseMinContribution] = useState<boolean>(true);
-    const [minContribution, setMinContribution] = useState<number>(initialMinContribution);
     const [isEditingMinContribution, setIsEditingMinContribution] = useState(false);
-    const [termsAccepted, setTermsAccepted] = useState(false);
     const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false);
-    const [canCheckTerms, setCanCheckTerms] = useState(false); // New state to control checkbox
+    const [canCheckTerms, setCanCheckTerms] = useState(false);
+    const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    const updateField = <K extends keyof ConfirmationData>(field: K, value: ConfirmationData[K]) => {
+        setConfirmationData(prev => {
+            const updated = { ...prev, [field]: value };
+            // onChange(updated);
+            return updated;
+        });
+    };
+
+     // Llama a onChange cada vez que listDetails cambie
+        useEffect(() => {
+            onChange(confirmationData);
+        }, [confirmationData, onChange]);
+
+    const handleScroll = () => {
+        if (scrollAreaRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+            if (scrollTop + clientHeight >= scrollHeight - 5) {
+                setHasScrolledToBottom(true);
+            } else {
+                setHasScrolledToBottom(false);
+            }
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({
-            email,
-            phone,
-            useMinContribution,
-            minContribution,
-            termsAccepted
-        });
+        onSubmit(confirmationData);
     };
 
     const termsAndConditions = `
@@ -92,8 +109,8 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                         <Input
                             id="email"
                             type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={confirmationData.email}
+                            onChange={e => updateField("email", e.target.value)}
                             required
                         />
                     </div>
@@ -102,61 +119,80 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                         <Input
                             id="phone"
                             type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
+                            value={confirmationData.phone}
+                            onChange={e => updateField("phone", e.target.value)}
                             required
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Contribución Mínima</Label>
-                        <RadioGroup value={useMinContribution ? "yes" : "no"} onValueChange={(value) => setUseMinContribution(value === "yes")}>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="yes" id="yes" />
-                                    <Label htmlFor="yes">
-                                        Sí, usar ${isEditingMinContribution ? (
-                                            <Input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={minContribution}
-                                                onChange={(e) => setMinContribution(parseFloat(e.target.value) || 0)}
-                                                onBlur={() => setIsEditingMinContribution(false)}
-                                                className="w-20 inline-block"
-                                                autoFocus
-                                            />
-                                        ) : (
-                                            <span>{minContribution.toFixed(2)}</span>
-                                        )}
-                                    </Label>
-                                </div>
+                        <RadioGroup
+                            value={confirmationData.useMinContribution ? "yes" : "no"}
+                            onValueChange={(value) => updateField("useMinContribution", value === "yes")}
+                            className="flex flex-col gap-2"
+                        >
+                            <div className="flex items-center">
+                                <RadioGroupItem value="yes" id="yes" />
+                                <Label
+                                    htmlFor="yes"
+                                    className={`flex items-center space-x-2 cursor-pointer transition-colors ${
+                                        confirmationData.useMinContribution ? "text-primary font-semibold" : "text-muted-foreground"
+                                    }`}
+                                >
+                                    <span>Sí, usar</span>
+                                    {isEditingMinContribution ? (
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="10.0"
+                                            value={minContribution}
+                                            onChange={(e) => {
+                                                const newValue = parseFloat(e.target.value) || 0;
+                                                onMinContributionChange(newValue);
+                                            }}
+                                            onBlur={() => setIsEditingMinContribution(false)}
+                                            className="w-32 inline-block"
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <span>${minContribution.toFixed(2)}</span>
+                                    )}
+                                </Label>
                                 {!isEditingMinContribution && (
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setIsEditingMinContribution(true)}
+                                        className="p-0"
                                     >
                                         <Edit2 className="h-4 w-4" />
                                     </Button>
                                 )}
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center mt-2">
                                 <RadioGroupItem value="no" id="no" />
-                                <Label htmlFor="no">No establecer mínimo</Label>
+                                <Label
+                                    htmlFor="no"
+                                    className={`ml-2 cursor-pointer transition-colors ${
+                                        !confirmationData.useMinContribution ? "text-primary font-semibold" : "text-muted-foreground"
+                                    }`}
+                                >
+                                    No establecer mínimo
+                                </Label>
                             </div>
                         </RadioGroup>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Checkbox
                             id="terms"
-                            checked={termsAccepted}
+                            checked={confirmationData.termsAccepted}
                             onCheckedChange={(checked) => {
                                 if (canCheckTerms) {
-                                    setTermsAccepted(checked as boolean);
+                                    updateField("termsAccepted", checked as boolean);
                                 }
                             }}
-                            disabled={!canCheckTerms} // Disable checkbox until modal is opened
+                            disabled={!canCheckTerms}
                         />
                         <Label htmlFor="terms" className="text-sm">
                             Acepto los{" "}
@@ -173,7 +209,11 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                                             Por favor, lea atentamente los siguientes términos y condiciones.
                                         </DialogDescription>
                                     </DialogHeader>
-                                    <div className="h-[50vh] overflow-y-auto">
+                                    <div
+                                        ref={scrollAreaRef}
+                                        className="h-[50vh] overflow-y-auto"
+                                        onScroll={handleScroll}
+                                    >
                                         <div
                                             className="p-4 text-sm"
                                             dangerouslySetInnerHTML={{ __html: termsAndConditions }}
@@ -183,10 +223,12 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                                         <Button
                                             onClick={() => {
                                                 setIsTermsDialogOpen(false);
-                                                setCanCheckTerms(true); // Allow checkbox to be checked
+                                                setCanCheckTerms(true);
+                                                updateField("termsAccepted", true);
                                             }}
+                                            disabled={!hasScrolledToBottom}
                                         >
-                                            Aceptar y Cerrar
+                                            {hasScrolledToBottom ? "Aceptar y Cerrar" : "Desplácese hasta el final"}
                                         </Button>
                                     </div>
                                 </DialogContent>
@@ -198,7 +240,10 @@ export function ListConfirmation({ onSubmit, onBack, initialEmail, initialPhone,
                     <Button type="button" variant="outline" onClick={onBack}>
                         Atrás
                     </Button>
-                    <Button type="submit" disabled={!termsAccepted}>
+                    <Button 
+                        type="submit" 
+                        disabled={!confirmationData.termsAccepted || !confirmationData.email || !confirmationData.phone}
+                    >
                         <Send className="mr-2 h-4 w-4" />
                         Publicar
                     </Button>
