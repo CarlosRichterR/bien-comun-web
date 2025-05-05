@@ -9,8 +9,8 @@ import { ListDetails } from "./ListDetails"
 import { ListConfirmation } from "./ListConfirmation"
 import { Button } from "@/components/ui/button"
 import { CatalogItem } from "../../utils/catalog-data"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { Save } from 'lucide-react'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Save, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { EventTypeDTO } from "@/types/models/EventTypeDTO"
 import { EventType } from "@/types/enums/EventType"
@@ -57,6 +57,7 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     const [userEmail, setUserEmail] = useState<string>(""); // Added state for user email
     const [userPhone, setUserPhone] = useState<string>(""); // Added state for user phone
     const [listStatus, setListStatus] = useState<ListStatus>("draft"); // Added state for list status
+    const [showExitDialog, setShowExitDialog] = useState(false);
 
     const steps: Step[] = ["event-selection", "guest-info", "gift-selection", "list-details", "list-confirmation"]
     const currentStepIndex = steps.indexOf(currentStep)
@@ -216,24 +217,52 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     }, [])
 
     return (
-        <div className="w-full max-w-4xl mx-auto relative">
-            <div className="mb-8">
-                <div className="w-full bg-muted rounded-full h-2 mb-4">
-                    <div
-                        className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
-                        style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
-                    />
-                </div>
-                <div className="flex justify-between mt-2">
-                    {steps.map((step, index) => (
-                        <div key={step} className={`flex flex-col items-center ${index <= currentStepIndex ? 'text-primary' : 'text-muted-foreground'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStepIndex ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                {index + 1}
+        <div className="w-full max-w-4xl mx-auto relative pt-10">
+            {/* Exit confirmation dialog */}
+            <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás seguro de que quieres salir?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tu progreso se guardará como borrador. Puedes continuar más tarde desde donde lo dejaste.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleExit}>Salir y Guardar</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <div className="mb-8 flex items-start justify-between">
+                {/* Stepper (barra de progreso y pasos) */}
+                <div className="flex-1">
+                    <div className="w-full bg-muted rounded-full h-2 mb-4">
+                        <div
+                            className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
+                            style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+                        />
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                        {steps.map((step, index) => (
+                            <div key={step} className={`flex flex-col items-center ${index <= currentStepIndex ? 'text-primary' : 'text-muted-foreground'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStepIndex ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                    {index + 1}
+                                </div>
+                                <span className="text-xs mt-1">{stepLabels[step]}</span>
                             </div>
-                            <span className="text-xs mt-1">{stepLabels[step]}</span>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
+                {/* Botón X alineado a la derecha, más separado y más arriba */}
+                <Button
+                    type="button"
+                    variant="ghost"
+                    className="ml-10 mt-[-20px] w-10 h-10 p-0 flex items-center justify-center transition-all duration-200 hover:bg-muted rounded-full"
+                    onClick={() => setShowExitDialog(true)}
+                    aria-label="Salir y guardar borrador"
+                >
+                    <X className="w-6 h-6" />
+                </Button>
             </div>
 
             <AnimatePresence mode="wait">
@@ -303,29 +332,14 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
             </AnimatePresence>
 
             <div className="mt-8 flex justify-center">
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button
-                            variant="outline"
-                            className="shadow-md hover:shadow-lg transition-shadow duration-300"
-                        >
-                            <Save className="h-4 w-4 mr-2" />
-                            Salir y Guardar Borrador
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>¿Estás seguro de que quieres salir?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Tu progreso se guardará como borrador. Puedes continuar más tarde desde donde lo dejaste.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleExit}>Salir y Guardar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                    variant="outline"
+                    className="shadow-md hover:shadow-lg transition-shadow duration-300"
+                    onClick={() => setShowExitDialog(true)}
+                >
+                    <Save className="h-4 w-4 mr-2" />
+                    Salir y Guardar Borrador
+                </Button>
             </div>
         </div>
     )
