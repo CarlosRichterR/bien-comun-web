@@ -35,11 +35,11 @@ interface ListDetailsProps {
 export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange, isAddressModified, setIsAddressModified }: ListDetailsProps) {
     const [listDetails, setListDetails] = useState<ListDetailsData>(initialDetails);
 
-    const updateField = <K extends keyof ListDetailsData>(field: K, value: ListDetailsData[K]) => {
+    const updateField = <K extends keyof ListDetailsData>(field: K, value: ListDetailsData[K], triggerAddressModified = true) => {
         setListDetails((prev) => ({ ...prev, [field]: value }));
 
-        // Si el campo modificado es "address", activa la bandera en el padre
-        if (field === "address") {
+        // Si el campo modificado es "address" y se debe activar la bandera
+        if (field === "address" && triggerAddressModified) {
             setIsAddressModified(true);
         }
     };
@@ -55,13 +55,13 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
             );
             const data = await response.json();
             if (data && data.display_name) {
-                updateField("address", data.display_name); // Actualizar la dirección literal
+                updateField("address", data.display_name, false); // No activar la bandera al actualizar desde el mapa
             } else {
-                updateField("address", "Dirección no encontrada");
+                updateField("address", "Dirección no encontrada", false);
             }
         } catch (error) {
             console.error("Error al obtener la dirección:", error);
-            updateField("address", "Error al obtener la dirección");
+            updateField("address", "Error al obtener la dirección", false);
         }
     };
 
@@ -89,15 +89,17 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
         map.on("click", (e: L.LeafletMouseEvent) => {
             const { lat, lng } = e.latlng;
             updateField("location", [lat, lng]);
-            marker.setLatLng([lat, lng]); // Mover el marcador a la nueva ubicación
-            fetchAddress(lat, lng); // Obtener la dirección literal
+            marker.setLatLng([lat, lng]);
+            setIsAddressModified(false);
+            setTimeout(() => fetchAddress(lat, lng), 0); // Llamar después de actualizar el estado
         });
 
         // Actualizar la ubicación al arrastrar el marcador
         marker.on("dragend", () => {
             const { lat, lng } = marker.getLatLng();
             updateField("location", [lat, lng]);
-            fetchAddress(lat, lng); // Obtener la dirección literal
+            setIsAddressModified(false);
+            setTimeout(() => fetchAddress(lat, lng), 0); // Llamar después de actualizar el estado
         });
 
         // Limpiar el mapa al desmontar el componente
@@ -216,6 +218,7 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
                             value={listDetails.address}
                             onChange={(e) => {
                                 updateField("address", e.target.value); // Actualiza el campo y activa el flag
+                                setIsAddressModified(true); // Activar la bandera solo cuando el usuario edita manualmente
                             }}
                             placeholder="La dirección aparecerá aquí"
                             className="w-full p-2 border rounded-md text-sm text-muted-foreground resize-none"
