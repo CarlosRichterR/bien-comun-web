@@ -23,7 +23,6 @@ import {
 import { ListDetailsData } from "@/types/models/ListDetails";
 
 interface ListDetailsProps {
-    eventType: string;
     initialDetails: ListDetailsData;
     onSubmit: (listDetails: ListDetailsData) => void;
     onBack: () => void;
@@ -33,7 +32,7 @@ interface ListDetailsProps {
     setIsAddressModified: (value: boolean) => void;
 }
 
-export function ListDetails({ eventType, initialDetails, onSubmit, onBack, onNext, onChange, isAddressModified, setIsAddressModified }: ListDetailsProps) {
+export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange, isAddressModified, setIsAddressModified }: ListDetailsProps) {
     const [listDetails, setListDetails] = useState<ListDetailsData>(initialDetails);
 
     const updateField = <K extends keyof ListDetailsData>(field: K, value: ListDetailsData[K]) => {

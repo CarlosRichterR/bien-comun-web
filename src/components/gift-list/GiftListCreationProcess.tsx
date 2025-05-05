@@ -16,6 +16,7 @@ import { EventTypeDTO } from "@/types/models/EventTypeDTO"
 import { EventType } from "@/types/enums/EventType"
 import { ListDetailsData } from '@/types/models/ListDetails'
 import { ConfirmationData } from '@/types/models/ConfirmationData'
+import { getEventTypeLabel } from '@/lib/getEventTypeLabel'
 
 type Step = "event-selection" | "guest-info" | "gift-selection" | "list-details" | "list-confirmation"
 type ListStatus = "draft" | "publish"
@@ -34,11 +35,10 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         customType: undefined,
     });
     const [guestCount, setGuestCount] = useState<number>(0)
-    const [contributionPerGuest, setContributionPerGuest] = useState<number>(0)
     const [minContribution, setMinContribution] = useState<number>(200)
     const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([])
+
     const [listDetails, setListDetails] = useState<ListDetailsData>({
-        listName: "",
         eventDate: new Date(),
         campaignStartDate: new Date(),
         campaignStartTime: "09:00",
@@ -54,8 +54,6 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         useMinContribution: true,
         termsAccepted: false,
     });
-    const [userEmail, setUserEmail] = useState<string>(""); // Added state for user email
-    const [userPhone, setUserPhone] = useState<string>(""); // Added state for user phone
     const [listStatus, setListStatus] = useState<ListStatus>("draft"); // Added state for list status
     const [showExitDialog, setShowExitDialog] = useState(false);
 
@@ -126,14 +124,9 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
             if (!response.ok) {
                 throw new Error('Failed to save draft');
             }
-
-            // const result = await response.json();
-            // console.log('Draft saved successfully:', result);
-            // localStorage.setItem('giftListDraft', JSON.stringify(draftData));
             onExit();
         } catch (error) {
             console.error('Error saving draft:', error);
-            // Handle error (e.g., show a notification to the user)
         }
     }
 
@@ -215,6 +208,13 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     useEffect(() => {
         loadDraft()
     }, [])
+
+    useEffect(() => {
+        setListDetails(prev => ({
+            ...prev,
+            listName: `Mi lista de ${getEventTypeLabel(eventTypeDTO.type) === "Otro" ? eventTypeDTO.customType : getEventTypeLabel(eventTypeDTO.type)}`
+        }));
+    }, [eventTypeDTO.type, eventTypeDTO.customType]);
 
     return (
         <div className="w-full max-w-4xl mx-auto relative pt-10">
@@ -308,7 +308,6 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     )}
                     {currentStep === "list-details" && (
                         <ListDetails
-                            eventType={eventTypeDTO.type || eventTypeDTO.customType || ""}
                             initialDetails={listDetails}
                             onSubmit={handleListDetailsSubmitted}
                             onBack={handleBack}

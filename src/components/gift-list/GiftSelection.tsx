@@ -31,6 +31,8 @@ import { EventType } from "./EventTypeSelection"
 import { ItemDetailsModal } from './ItemDetailsModal'
 import { CustomProductModal } from './CustomProductModal'
 import { MultiSelect } from "../ui-custom/multi-select"; 
+import { getEventTypeLabel } from "@/lib/getEventTypeLabel"
+
 interface GiftSelectionProps {
     eventType: EventType | null;
     customEventType?: string;
@@ -238,21 +240,6 @@ export function GiftSelection({
     const handleAddCustomProduct = (customProduct: CatalogItem) => {
         setSelectedGifts(prevGifts => [...prevGifts, customProduct]);
         setIsCustomProductModalOpen(false);
-    };
-
-    const getEventTypeLabel = (eventType: EventType): string => {
-        switch (eventType) {
-            case 0:
-                return "Boda";
-            case 1:
-                return "Cumpleaños";
-            case 2:
-                return "Baby Shower";
-            case 3:
-                return "Otro";
-            default:
-                return "Desconocido";
-        }
     };
 
     const fetchPaginatedProducts = async (page: number, pageSize: number) => {
