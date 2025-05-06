@@ -171,8 +171,8 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         setConfirmationData(updatedData);
     };
 
-    const handleSubmit = async (confirmationData: any) => {
-        const finalData = {
+    const handlePublish = async (confirmationData: ConfirmationData) => {
+        const publishData = {
             eventTypeDTO: {
                 eventType: eventTypeDTO.type as number,
                 customEventType: eventTypeDTO.customType,
@@ -185,16 +185,26 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                 productId: gift.id,
                 quantity: gift.quantity || 1,
             })),
-            email: confirmationData.email,
-            phone: confirmationData.phone,
-            useMinContribution: confirmationData.useMinContribution,
+            confirmationData: {
+                ...confirmationData
+            }
         };
 
         try {
-            onComplete(finalData);
+            const response = await fetch(`${process.env.API_URL}/api/List`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(publishData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to publish list');
+            }
+            onExit(); // Navegar al dashboard
         } catch (error) {
-            console.error('Error submitting list:', error);
-            // Handle error appropriately
+            console.error('Error publishing list:', error);
         }
     };
 
@@ -215,6 +225,46 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
             listName: `Mi lista de ${getEventTypeLabel(eventTypeDTO.type) === "Otro" ? eventTypeDTO.customType : getEventTypeLabel(eventTypeDTO.type)}`
         }));
     }, [eventTypeDTO.type, eventTypeDTO.customType]);
+
+    // Genera mensajes de advertencia para los campos faltantes
+    const getMissingFields = () => {
+        const messages: string[] = [];
+        // if (eventTypeDTO.type !== undefined && eventTypeDTO.type !== null) messages.push('Selecciona el tipo de evento.');
+        // if (eventTypeDTO.type === EventType.Other && !eventTypeDTO.customType) messages.push('Especifica el nombre del evento personalizado.');
+        if (guestCount <= 0) messages.push('Agrega el número de invitados.');
+        if (selectedGifts.length === 0) messages.push('Selecciona al menos un regalo.');
+        if (!listDetails.listName) messages.push('El nombre de la lista es obligatorio.');
+        if (!listDetails.eventDate || new Date(listDetails.eventDate) <= new Date()) messages.push('Selecciona una fecha de evento válida.');
+        if (!listDetails.campaignStartDate) messages.push('Selecciona la fecha de inicio de la campaña.');
+        if (!listDetails.campaignEndDate) messages.push('Selecciona la fecha de fin de la campaña.');
+        if (!listDetails.campaignStartTime) messages.push('Selecciona la hora de inicio de la campaña.');
+        if (!listDetails.campaignEndTime) messages.push('Selecciona la hora de fin de la campaña.');
+        if (!Array.isArray(listDetails.location) || listDetails.location.length !== 2) messages.push('Selecciona una ubicación en el mapa.');
+        if (!listDetails.address) messages.push('La dirección es obligatoria.');
+        if (!confirmationData.email) messages.push('El correo electrónico es obligatorio.');
+        if (!confirmationData.phone) messages.push('El número de teléfono es obligatorio.');
+        if (!confirmationData.termsAccepted) messages.push('Debes aceptar los términos y condiciones.');
+        return messages;
+    };
+
+    // Validación global para habilitar publicación
+    const isPublishable = (
+        eventTypeDTO.type !== undefined && eventTypeDTO.type !== null &&
+        (eventTypeDTO.type !== EventType.Other || (eventTypeDTO.type === EventType.Other && !!eventTypeDTO.customType)) &&
+        guestCount > 0 &&
+        selectedGifts.length > 0 &&
+        !!listDetails.listName &&
+        !!listDetails.eventDate && new Date(listDetails.eventDate) > new Date() &&
+        !!listDetails.campaignStartDate &&
+        !!listDetails.campaignEndDate &&
+        !!listDetails.campaignStartTime &&
+        !!listDetails.campaignEndTime &&
+        Array.isArray(listDetails.location) && listDetails.location.length === 2 &&
+        !!listDetails.address &&
+        !!confirmationData.email &&
+        !!confirmationData.phone &&
+        confirmationData.termsAccepted
+    );
 
     return (
         <div className="w-full max-w-4xl mx-auto relative pt-10">
@@ -326,12 +376,14 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     )}
                     {currentStep === "list-confirmation" && (
                         <ListConfirmation
-                            onSubmit={handleSubmit}
+                            onSubmit={handlePublish}
                             onBack={handleBack}
                             initialData={confirmationData}
                             minContribution={minContribution}
                             onMinContributionChange={handleMinContributionUpdate}
                             onChange={handleConfirmationChange}
+                            isPublishable={isPublishable}
+                            missingFields={getMissingFields()}
                         />
                     )}
                 </motion.div>

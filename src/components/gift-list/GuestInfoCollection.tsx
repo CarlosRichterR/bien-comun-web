@@ -33,18 +33,16 @@ export function GuestInfoCollection({
             </CardHeader>
             <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="guestCount">Número de Invitados</Label>
-                        <Input
-                            id="guestCount"
-                            type="number"
-                            min="1"
-                            value={guestCount || ''}
-                            onChange={(e) => onGuestCountChange(Number(e.target.value))}
-                            placeholder="Ingrese el número de invitados"
-                            required
-                        />
-                    </div>
+                    <Input
+                        id="guestCount"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={guestCount || ''}
+                        onChange={(e) => onGuestCountChange(Number(e.target.value))}
+                        placeholder="Ingrese el número de invitados"
+                        required
+                    />
                     <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                             <Label htmlFor="minContribution">Contribución Mínima ($)</Label>
@@ -63,7 +61,7 @@ export function GuestInfoCollection({
                             id="minContribution"
                             type="number"
                             min="0"
-                            step="0.01"
+                            step="10.0"
                             value={minContribution || ''}
                             onChange={(e) => onMinContributionChange(Number(e.target.value))}
                             placeholder="Ingrese la contribución mínima"

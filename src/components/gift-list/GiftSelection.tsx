@@ -63,12 +63,6 @@ export function GiftSelection({
 
     const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>(selectedGiftsFather || []);
 
-    // // Sincroniza el estado local con los cambios en selectedGiftsFather
-    // useEffect(() => {
-    //     setSelectedGifts(selectedGiftsFather);
-    // }, [selectedGiftsFather]);
-
-    // Llama a onSelectedGiftsChange cada vez que selectedGifts cambie
     useEffect(() => {
         if (typeof onSelectedGiftsChange === "function") {  
             onSelectedGiftsChange(selectedGifts);
@@ -406,10 +400,16 @@ export function GiftSelection({
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => addGiftToList(item)}>
-                                                                <Plus className="mr-2 h-4 w-4" />
-                                                                Agregar a Lista de Regalos
-                                                            </DropdownMenuItem>
+                                                            {selectedGifts.some(gift => gift.id === item.id) ? (
+                                                                <DropdownMenuItem disabled className="text-green-600 cursor-default">
+                                                                    ✓ Ya agregado a la lista
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem onClick={() => addGiftToList(item)}>
+                                                                    <Plus className="mr-2 h-4 w-4" />
+                                                                    Agregar a Lista de Regalos
+                                                                </DropdownMenuItem>
+                                                            )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </CardContent>

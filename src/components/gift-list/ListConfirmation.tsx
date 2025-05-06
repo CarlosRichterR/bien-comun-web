@@ -18,6 +18,8 @@ interface ListConfirmationProps {
     minContribution: number; // Nuevo prop separado
     onMinContributionChange: (value: number) => void;
     onChange: (updatedData: ConfirmationData) => void;
+    isPublishable: boolean; // Nuevo prop
+    missingFields?: string[]; // Nueva prop opcional
 }
 
 export function ListConfirmation({
@@ -26,7 +28,9 @@ export function ListConfirmation({
     initialData,
     minContribution, // Recibe el prop
     onMinContributionChange,
-    onChange
+    onChange,
+    isPublishable, // Recibe el prop
+    missingFields = [] // Por defecto vacío
 }: ListConfirmationProps) {
     const [confirmationData, setConfirmationData] = useState<ConfirmationData>(initialData);
 
@@ -34,6 +38,7 @@ export function ListConfirmation({
     const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false);
     const [canCheckTerms, setCanCheckTerms] = useState(false);
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+    const [showWarnings, setShowWarnings] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
     const updateField = <K extends keyof ConfirmationData>(field: K, value: ConfirmationData[K]) => {
@@ -60,9 +65,11 @@ export function ListConfirmation({
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSubmit(confirmationData);
+    const handleDisabledClick = (e: React.MouseEvent) => {
+        if (!isPublishable) {
+            e.preventDefault();
+            setShowWarnings(true);
+        }
     };
 
     const termsAndConditions = `
@@ -102,153 +109,170 @@ export function ListConfirmation({
             <CardHeader>
                 <CardTitle className="text-2xl font-bold text-center">Confirmar Detalles</CardTitle>
             </CardHeader>
-            <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Correo Electrónico</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={confirmationData.email}
-                            onChange={e => updateField("email", e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="phone">Número de Teléfono</Label>
-                        <Input
-                            id="phone"
-                            type="tel"
-                            value={confirmationData.phone}
-                            onChange={e => updateField("phone", e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Contribución Mínima</Label>
-                        <RadioGroup
-                            value={confirmationData.useMinContribution ? "yes" : "no"}
-                            onValueChange={(value) => updateField("useMinContribution", value === "yes")}
-                            className="flex flex-col gap-2"
-                        >
-                            <div className="flex items-center">
-                                <RadioGroupItem value="yes" id="yes" />
-                                <Label
-                                    htmlFor="yes"
-                                    className={`flex items-center space-x-2 cursor-pointer transition-colors ${
-                                        confirmationData.useMinContribution ? "text-primary font-semibold" : "text-muted-foreground"
-                                    }`}
-                                >
-                                    <span>Sí, usar</span>
-                                    {isEditingMinContribution ? (
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            step="10.0"
-                                            value={minContribution}
-                                            onChange={(e) => {
-                                                const newValue = parseFloat(e.target.value) || 0;
-                                                onMinContributionChange(newValue);
-                                            }}
-                                            onBlur={() => setIsEditingMinContribution(false)}
-                                            className="w-32 inline-block"
-                                            autoFocus
-                                        />
-                                    ) : (
-                                        <span>${minContribution.toFixed(2)}</span>
-                                    )}
-                                </Label>
-                                {!isEditingMinContribution && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setIsEditingMinContribution(true)}
-                                        className="p-0"
-                                    >
-                                        <Edit2 className="h-4 w-4" />
-                                    </Button>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Input
+                        id="email"
+                        type="email"
+                        value={confirmationData.email}
+                        onChange={e => updateField("email", e.target.value)}
+                        required
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="phone">Número de Teléfono</Label>
+                    <Input
+                        id="phone"
+                        type="tel"
+                        value={confirmationData.phone}
+                        onChange={e => updateField("phone", e.target.value)}
+                        required
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label>Contribución Mínima</Label>
+                    <RadioGroup
+                        value={confirmationData.useMinContribution ? "yes" : "no"}
+                        onValueChange={(value) => updateField("useMinContribution", value === "yes")}
+                        className="flex flex-col gap-2"
+                    >
+                        <div className="flex items-center">
+                            <RadioGroupItem value="yes" id="yes" />
+                            <Label
+                                htmlFor="yes"
+                                className={`flex items-center space-x-2 cursor-pointer transition-colors ${
+                                    confirmationData.useMinContribution ? "text-primary font-semibold" : "text-muted-foreground"
+                                }`}
+                            >
+                                <span>Sí, usar</span>
+                                {isEditingMinContribution ? (
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="10.0"
+                                        value={minContribution}
+                                        onChange={(e) => {
+                                            const newValue = parseFloat(e.target.value) || 0;
+                                            onMinContributionChange(newValue);
+                                        }}
+                                        onBlur={() => setIsEditingMinContribution(false)}
+                                        className="w-32 inline-block"
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <span>${minContribution.toFixed(2)}</span>
                                 )}
-                            </div>
-                            <div className="flex items-center mt-2">
-                                <RadioGroupItem value="no" id="no" />
-                                <Label
-                                    htmlFor="no"
-                                    className={`ml-2 cursor-pointer transition-colors ${
-                                        !confirmationData.useMinContribution ? "text-primary font-semibold" : "text-muted-foreground"
-                                    }`}
+                            </Label>
+                            {!isEditingMinContribution && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setIsEditingMinContribution(true)}
+                                    className="p-0"
                                 >
-                                    No establecer mínimo
-                                </Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="terms"
-                            checked={confirmationData.termsAccepted}
-                            onCheckedChange={(checked) => {
-                                if (canCheckTerms) {
-                                    updateField("termsAccepted", checked as boolean);
-                                }
-                            }}
-                            disabled={!canCheckTerms}
-                        />
-                        <Label htmlFor="terms" className="text-sm">
-                            Acepto los{" "}
-                            <Dialog open={isTermsDialogOpen} onOpenChange={setIsTermsDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="link" className="p-0 h-auto font-normal">
-                                        términos y condiciones
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto flex flex-col">
-                                    <DialogHeader>
-                                        <DialogTitle>Términos y Condiciones</DialogTitle>
-                                        <DialogDescription>
-                                            Por favor, lea atentamente los siguientes términos y condiciones.
-                                        </DialogDescription>
-                                    </DialogHeader>
+                                    <Edit2 className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex items-center mt-2">
+                            <RadioGroupItem value="no" id="no" />
+                            <Label
+                                htmlFor="no"
+                                className={`ml-2 cursor-pointer transition-colors ${
+                                    !confirmationData.useMinContribution ? "text-primary font-semibold" : "text-muted-foreground"
+                                }`}
+                            >
+                                No establecer mínimo
+                            </Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="terms"
+                        checked={confirmationData.termsAccepted}
+                        onCheckedChange={(checked) => {
+                            if (canCheckTerms) {
+                                updateField("termsAccepted", checked as boolean);
+                            }
+                        }}
+                        disabled={!canCheckTerms}
+                    />
+                    <Label htmlFor="terms" className="text-sm">
+                        Acepto los{" "}
+                        <Dialog open={isTermsDialogOpen} onOpenChange={setIsTermsDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="link" className="p-0 h-auto font-normal">
+                                    términos y condiciones
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto flex flex-col">
+                                <DialogHeader>
+                                    <DialogTitle>Términos y Condiciones</DialogTitle>
+                                    <DialogDescription>
+                                        Por favor, lea atentamente los siguientes términos y condiciones.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div
+                                    ref={scrollAreaRef}
+                                    className="h-[50vh] overflow-y-auto"
+                                    onScroll={handleScroll}
+                                >
                                     <div
-                                        ref={scrollAreaRef}
-                                        className="h-[50vh] overflow-y-auto"
-                                        onScroll={handleScroll}
+                                        className="p-4 text-sm"
+                                        dangerouslySetInnerHTML={{ __html: termsAndConditions }}
+                                    />
+                                </div>
+                                <div className="mt-4 flex justify-end">
+                                    <Button
+                                        onClick={() => {
+                                            setIsTermsDialogOpen(false);
+                                            setCanCheckTerms(true);
+                                            updateField("termsAccepted", true);
+                                        }}
+                                        disabled={!hasScrolledToBottom}
                                     >
-                                        <div
-                                            className="p-4 text-sm"
-                                            dangerouslySetInnerHTML={{ __html: termsAndConditions }}
-                                        />
-                                    </div>
-                                    <div className="mt-4 flex justify-end">
-                                        <Button
-                                            onClick={() => {
-                                                setIsTermsDialogOpen(false);
-                                                setCanCheckTerms(true);
-                                                updateField("termsAccepted", true);
-                                            }}
-                                            disabled={!hasScrolledToBottom}
-                                        >
-                                            {hasScrolledToBottom ? "Aceptar y Cerrar" : "Desplácese hasta el final"}
-                                        </Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </Label>
-                    </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
+                                        {hasScrolledToBottom ? "Aceptar y Cerrar" : "Desplácese hasta el final"}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </Label>
+                </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-2 items-stretch">
+                <div className="flex justify-between w-full">
                     <Button type="button" variant="outline" onClick={onBack}>
                         Atrás
                     </Button>
-                    <Button 
-                        type="submit" 
-                        disabled={!confirmationData.termsAccepted || !confirmationData.email || !confirmationData.phone}
-                    >
-                        <Send className="mr-2 h-4 w-4" />
-                        Publicar
-                    </Button>
-                </CardFooter>
-            </form>
+                    <div className="relative">
+                        {!isPublishable && (
+                            <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}
+                                onClick={handleDisabledClick}
+                                aria-hidden="true"
+                            />
+                        )}
+                        <Button
+                            type="button"
+                            disabled={!isPublishable}
+                            tabIndex={isPublishable ? 0 : -1}
+                            onClick={() => isPublishable && onSubmit(confirmationData)}
+                        >
+                            <Send className="mr-2 h-4 w-4" />
+                            Publicar
+                        </Button>
+                    </div>
+                </div>
+                {showWarnings && !isPublishable && missingFields.length > 0 && (
+                    <ul className="mt-2 text-red-600 text-sm list-disc list-inside animate-pulse">
+                        {missingFields.map((msg, idx) => (
+                            <li key={idx}>{msg}</li>
+                        ))}
+                    </ul>
+                )}
+            </CardFooter>
         </Card>
     );
 }
