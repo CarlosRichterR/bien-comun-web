@@ -244,12 +244,19 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
                     </div>
                     <div className="flex justify-between items-center mt-2">
                         {steps.map((step, index) => (
-                            <div key={step} className={`flex flex-col items-center ${index <= currentStepIndex ? 'text-primary' : 'text-muted-foreground'}`}>
+                            <button
+                                key={step}
+                                type="button"
+                                className={`flex flex-col items-center focus:outline-none ${index <= currentStepIndex ? 'text-primary' : 'text-muted-foreground'}`}
+                                onClick={() => setCurrentStep(step)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                                aria-current={currentStep === step ? 'step' : undefined}
+                            >
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStepIndex ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                     {index + 1}
                                 </div>
                                 <span className="text-xs mt-1">{stepLabels[step]}</span>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>
