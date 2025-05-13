@@ -25,26 +25,34 @@ export default function LoginPage({ onLogin, errorMessage, onGoogleLogin }: Logi
     const [username, setUsername] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter()
 
     const handleLogin2 = async (e: React.FormEvent) => {
-        e.preventDefault()
-        const result = await handleLogin(email, password)
+        e.preventDefault();
+        setIsLoading(true);
+        const result = await handleLogin(email, password);
+        setIsLoading(false);
         if (result.success) {
-            router.push('/dashboard')
+            router.push('/dashboard');
         } else {
-            alert(result.errorMessage)
+            alert(result.errorMessage);
         }
     }
 
     const handleRegister = (e: React.FormEvent) => {
-        e.preventDefault()
+        e.preventDefault();
+        setIsLoading(true);
         if (password !== confirmPassword) {
-            alert("Las contraseñas no coinciden")
-            return
+            alert("Las contraseñas no coinciden");
+            setIsLoading(false);
+            return;
         }
-        console.log('Registro intentado con:', username, email, password)
-        onLogin(email, password)
+        // Simula espera de backend
+        setTimeout(() => {
+            setIsLoading(false);
+            onLogin(email, password);
+        }, 1000);
     }
 
     const handleGoogleLogin = () => {
@@ -101,8 +109,18 @@ export default function LoginPage({ onLogin, errorMessage, onGoogleLogin }: Logi
                                     </div>
                                 </div>
                                 {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
-                                <Button className="w-full mt-4" type="submit">
-                                    Iniciar Sesión
+                                <Button className="w-full mt-4" type="submit" disabled={isLoading}>
+                                    {isLoading ? (
+                                        <span className="flex items-center justify-center">
+                                            <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                            </svg>
+                                            Procesando...
+                                        </span>
+                                    ) : (
+                                        'Iniciar Sesión'
+                                    )}
                                 </Button>
                             </form>
                             <p className="text-sm text-center mt-4">
@@ -156,8 +174,18 @@ export default function LoginPage({ onLogin, errorMessage, onGoogleLogin }: Logi
                                         />
                                     </div>
                                 </div>
-                                <Button className="w-full mt-4" type="submit">
-                                    Registrarse
+                                <Button className="w-full mt-4" type="submit" disabled={isLoading}>
+                                    {isLoading ? (
+                                        <span className="flex items-center justify-center">
+                                            <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                            </svg>
+                                            Procesando...
+                                        </span>
+                                    ) : (
+                                        'Registrarse'
+                                    )}
                                 </Button>
                             </form>
                         </TabsContent>
