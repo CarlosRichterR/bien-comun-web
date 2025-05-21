@@ -23,7 +23,8 @@ const allCatalogItems: CatalogItem[] = [
     name: "Blender",
     price: 49.99,
     category: "Kitchen",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl:
+      "https://www.oster.com.mx/on/demandware.static/-/Sites-oster-Library/default/dw4a9f4e0c/images/hi-res/BLSTKAGRRD-013-1.jpg",
     supplier: "KitchenWare",
   },
   {
@@ -31,7 +32,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Toaster",
     price: 29.99,
     category: "Kitchen",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/71u1v1zKQzL._AC_SL1500_.jpg",
     supplier: "HomeAppliances",
   },
   {
@@ -39,7 +40,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Coffee Maker",
     price: 79.99,
     category: "Kitchen",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81gF6b+zKSL._AC_SL1500_.jpg",
     supplier: "CoffeeLovers",
   },
   {
@@ -47,7 +48,8 @@ const allCatalogItems: CatalogItem[] = [
     name: "Bedding Set",
     price: 89.99,
     category: "Bedroom",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl:
+      "https://www.bhg.com/thmb/9eYw8Ue5p3xv6YxVh7o5fYx2n6M=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/pottery-barn-mark-sikes-collection-bedding-11733457-05132525-1-2000-5e8f5e2a3a2b4a1e8e9f5e2a3a2b4a1e.jpg",
     supplier: "SweetDreams",
   },
   {
@@ -55,7 +57,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Throw Pillows",
     price: 24.99,
     category: "Living Room",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81z+2F3X2cL._AC_SL1500_.jpg",
     supplier: "CozyHome",
   },
   {
@@ -63,7 +65,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Picture Frames",
     price: 19.99,
     category: "Decor",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81z+2F3X2cL._AC_SL1500_.jpg",
     supplier: "FrameIt",
   },
   {
@@ -71,7 +73,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Baby Monitor",
     price: 129.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/71u1v1zKQzL._AC_SL1500_.jpg",
     supplier: "BabyTech",
   },
   {
@@ -79,7 +81,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Diaper Bag",
     price: 59.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81gF6b+zKSL._AC_SL1500_.jpg",
     supplier: "BabyEssentials",
   },
   {
@@ -87,7 +89,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Stroller",
     price: 199.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81gF6b+zKSL._AC_SL1500_.jpg",
     supplier: "BabyOnTheGo",
   },
   {
@@ -95,7 +97,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Board Game Set",
     price: 39.99,
     category: "Entertainment",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81z+2F3X2cL._AC_SL1500_.jpg",
     supplier: "FunAndGames",
   },
   {
@@ -103,7 +105,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Crib",
     price: 299.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/71u1v1zKQzL._AC_SL1500_.jpg",
     supplier: "BabyDreams",
   },
   {
@@ -111,7 +113,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "High Chair",
     price: 89.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81gF6b+zKSL._AC_SL1500_.jpg",
     supplier: "BabyDining",
   },
   {
@@ -119,7 +121,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Baby Bottles",
     price: 19.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81z+2F3X2cL._AC_SL1500_.jpg",
     supplier: "BabyFeeding",
   },
   {
@@ -127,7 +129,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Pacifiers",
     price: 9.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/71u1v1zKQzL._AC_SL1500_.jpg",
     supplier: "BabyComfort",
   },
   {
@@ -135,7 +137,7 @@ const allCatalogItems: CatalogItem[] = [
     name: "Baby Clothes Set",
     price: 49.99,
     category: "Baby",
-    imageUrl: "/placeholder.svg?height=100&width=100",
+    imageUrl: "https://m.media-amazon.com/images/I/81gF6b+zKSL._AC_SL1500_.jpg",
     supplier: "TinyFashion",
   },
 ];

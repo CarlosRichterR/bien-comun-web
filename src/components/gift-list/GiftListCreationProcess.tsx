@@ -39,11 +39,11 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([])
 
     const [listDetails, setListDetails] = useState<ListDetailsData>({
-        eventDate: new Date(),
-        campaignStartDate: new Date(),
-        campaignStartTime: "09:00",
-        campaignEndDate: new Date(),
-        campaignEndTime: "18:00",
+        eventDate: null,
+        campaignStartDate: null,
+        campaignStartTime: "",
+        campaignEndDate: null,
+        campaignEndTime: "",
         location: [-17.3936, -66.157], // Coordenadas iniciales (Cochabamba, Bolivia)
         address: "",
     });

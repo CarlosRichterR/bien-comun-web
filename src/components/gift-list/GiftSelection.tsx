@@ -4,19 +4,9 @@ import { useState, useEffect } from "react"
 import { Gift, Trash2, Search, AlertCircle, MoreVertical, Plus, Filter } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "../ui-custom/Slider"
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -26,12 +16,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Image from "next/image"
-import { fetchCatalogItems, categories, CatalogItem, PaginatedResponse } from "../../utils/catalog-data"
-import { EventType } from "./EventTypeSelection"
+import { CatalogItem, PaginatedResponse } from "../../utils/catalog-data"
 import { ItemDetailsModal } from './ItemDetailsModal'
 import { CustomProductModal } from './CustomProductModal'
 import { MultiSelect } from "../ui-custom/multi-select"; 
 import { getEventTypeLabel } from "@/lib/getEventTypeLabel"
+import { EventType } from "@/types/enums/EventType"
 
 interface GiftSelectionProps {
     eventType: EventType | null;
@@ -43,7 +33,7 @@ interface GiftSelectionProps {
     minContribution: number;
     onBack: () => void;
     onNext: () => void;
-    onSelectedGiftsChange?: (selectedGifts: CatalogItem[]) => void; // Nueva prop
+    onSelectedGiftsChange?: (selectedGifts: CatalogItem[]) => void;
     selectedGiftsFather: CatalogItem[];
 }
 
@@ -58,27 +48,20 @@ export function GiftSelection({
     onBack,
     onNext,
     onSelectedGiftsChange,
-    selectedGiftsFather // Nueva prop
+    selectedGiftsFather
 }: GiftSelectionProps) {
-
+    // --- Estados ---
     const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>(selectedGiftsFather || []);
-
-    useEffect(() => {
-        if (typeof onSelectedGiftsChange === "function") {  
-            onSelectedGiftsChange(selectedGifts);
-        }
-    }, [selectedGifts, onSelectedGiftsChange]);
-
     const [catalogItems, setCatalogItems] = useState<PaginatedResponse>({
         items: [],
         totalItems: 0,
         currentPage: 1,
         totalPages: 1,
-        itemsPerPage: 6,
+        itemsPerPage: 20,
     });
-    const [categories, setCategories] = useState<string[]>([]); // State for categories
+    const [categories, setCategories] = useState<string[]>([]);
     const [currentCategory, setCurrentCategory] = useState("Todos");
-    const [loadingCategories, setLoadingCategories] = useState(false); // State for loading categories
+    const [loadingCategories, setLoadingCategories] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
@@ -88,25 +71,26 @@ export function GiftSelection({
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCustomProductModalOpen, setIsCustomProductModalOpen] = useState(false);
-    const [loading, setLoading] = useState(false); // Estado de carga
-    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false); // State to toggle advanced filters
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // State for selected categories
-    const [selectedVendors, setSelectedVendors] = useState<string[]>([]); // State for selected vendors
+    const [loading, setLoading] = useState(false);
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
 
-    const totalGiftValue = Array.isArray(selectedGifts)
-        ? selectedGifts.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
-        : 0;
-    const suggestedTotalAmount = guestCount * minContribution;
+    // --- Efectos ---
+    useEffect(() => {
+        if (typeof onSelectedGiftsChange === "function") {
+            onSelectedGiftsChange(selectedGifts);
+        }
+    }, [selectedGifts, onSelectedGiftsChange]);
 
     useEffect(() => {
         const fetchItems = async () => {
-            setLoading(true); // Inicia la carga
+            setLoading(true);
             try {
                 const { products, totalCount } = await fetchPaginatedProducts(
                     currentPage,
                     catalogItems.itemsPerPage
                 );
-
                 setCatalogItems({
                     items: products,
                     totalItems: totalCount,
@@ -114,44 +98,33 @@ export function GiftSelection({
                     totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
                     itemsPerPage: catalogItems.itemsPerPage,
                 });
-
-                // const uniqueVendors = Array.from(new Set(products.map(item => item.supplier)));
-                // setVendors(['Todos', ...uniqueVendors]);
             } catch (error) {
                 console.error('Error fetching items:', error);
             } finally {
-                setLoading(false); // Finaliza la carga
+                setLoading(false);
             }
         };
-
         fetchItems();
     }, [currentPage, currentCategory, searchTerm, selectedVendor, priceRange]);
 
     useEffect(() => {
         const fetchCategories = async () => {
-            setLoadingCategories(true); // Start loading
+            setLoadingCategories(true);
             try {
                 const response = await fetch(`${process.env.API_URL}/api/categories`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch categories');
-                }
-
+                if (!response.ok) throw new Error('Failed to fetch categories');
                 const data = await response.json();
-                const categoryNames = data.map((category: { id: number; name: string }) => category.name); // Extract names
-                setCategories(["Todos", ...categoryNames]); // Add "Todos" as the default category
+                const categoryNames = data.map((category: { id: number; name: string }) => category.name);
+                setCategories(["Todos", ...categoryNames]);
             } catch (error) {
                 console.error('Error fetching categories:', error);
             } finally {
-                setLoadingCategories(false); // End loading
+                setLoadingCategories(false);
             }
         };
-
         fetchCategories();
     }, []);
 
@@ -160,28 +133,43 @@ export function GiftSelection({
             try {
                 const response = await fetch(`${process.env.API_URL}/api/suppliers`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch suppliers');
-                }
-
+                if (!response.ok) throw new Error('Failed to fetch suppliers');
                 const data = await response.json();
                 const supplierOptions = data.map((supplier: { id: number; name: string }) => ({
                     label: supplier.name,
                     value: supplier.id.toString(),
                 }));
-                setVendors(supplierOptions); // Update the vendors state
+                setVendors(supplierOptions);
             } catch (error) {
                 console.error('Error fetching suppliers:', error);
             }
         };
-
         fetchSuppliers();
     }, []);
+
+    // --- Funciones auxiliares ---
+    const fetchPaginatedProducts = async (page: number, pageSize: number) => {
+        try {
+            const response = await fetch(
+                `${process.env.API_URL}/api/Products/paginated?page=${page}&pageSize=${pageSize}`,
+                {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            );
+            if (!response.ok) throw new Error('Failed to fetch paginated products');
+            const data = await response.json();
+            return {
+                products: data.items as CatalogItem[],
+                totalCount: data.totalCount as number,
+            };
+        } catch (error) {
+            console.error('Error fetching paginated products:', error);
+            return { products: [], totalCount: 0 };
+        }
+    };
 
     const addGiftToList = (item: CatalogItem) => {
         setSelectedGifts(prevGifts => [...prevGifts, item]);
@@ -198,8 +186,8 @@ export function GiftSelection({
             setCatalogItems(prevCatalog => ({
                 ...prevCatalog,
                 items: prevCatalog.items.some(item => item.id === removedGift.id)
-                    ? prevCatalog.items // Si ya existe, no lo agregues de nuevo
-                    : [...prevCatalog.items, removedGift], // Agrega solo si no existe
+                    ? prevCatalog.items
+                    : [...prevCatalog.items, removedGift],
             }));
         }
     };
@@ -209,9 +197,7 @@ export function GiftSelection({
         setCurrentPage(1);
     };
 
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
+    const handlePageChange = (page: number) => setCurrentPage(page);
 
     const handleSave = (newStatus?: 'draft' | 'published') => {
         const updatedStatus = newStatus || status;
@@ -224,8 +210,6 @@ export function GiftSelection({
         setIsModalOpen(true);
     };
 
-    const allCategories = ["Todos", "Muebles", "Herramientas", "Electrodomésticos"];
-
     const handleSaveAndNext = () => {
         handleSave();
         onNext();
@@ -236,29 +220,15 @@ export function GiftSelection({
         setIsCustomProductModalOpen(false);
     };
 
-    const fetchPaginatedProducts = async (page: number, pageSize: number) => {
-        try {
-            const response = await fetch(`${process.env.API_URL}/api/Products/paginated?page=${page}&pageSize=${pageSize}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+    // --- Cálculos derivados ---
+    const totalGiftValue = Array.isArray(selectedGifts)
+        ? selectedGifts.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
+        : 0;
+    const suggestedTotalAmount = guestCount * minContribution;
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch paginated products');
-            }
-
-            const data = await response.json();
-            return {
-                products: data.items as CatalogItem[],
-                totalCount: data.totalCount as number,
-            };
-        } catch (error) {
-            console.error('Error fetching paginated products:', error);
-            return { products: [], totalCount: 0 };
-        }
-    };
+    // --- Render ---
+    const eventTypeLabel = getEventTypeLabel(eventType as EventType);
+    const showCustomType = eventTypeLabel === "Otro" ? customEventType : eventTypeLabel;
 
     return (
         <div className="bg-background">
@@ -268,8 +238,7 @@ export function GiftSelection({
                 </Badge>
             </div>
             <h2 className="text-2xl font-semibold text-center mb-4">
-                Selección de Regalos para {getEventTypeLabel(eventType as EventType) === "Otro" ? 
-                customEventType : getEventTypeLabel(eventType as EventType)}
+                Selección de Regalos para {showCustomType}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="bg-card">
@@ -286,10 +255,10 @@ export function GiftSelection({
                             />
                             <div className="ml-2">
                                 <Button
-                                    variant={showAdvancedFilters ? "secondary" : "outline"} // Cambia el estilo según el estado
+                                    variant={showAdvancedFilters ? "secondary" : "outline"}
                                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                    className={`p-2 ${showAdvancedFilters ? "bg-primary text-white" : ""}`} // Estilos adicionales para el estado activo
-                                    title="Filtro avanzado" // Tooltip para accesibilidad
+                                    className={`p-2 ${showAdvancedFilters ? "bg-primary text-white" : ""}`}
+                                    title="Filtro avanzado"
                                 >
                                     <Filter className="h-5 w-5" />
                                 </Button>
@@ -298,123 +267,36 @@ export function GiftSelection({
                     </CardHeader>
                     <CardContent>
                         {showAdvancedFilters && (
-                            <div
-                                className="space-y-4 border rounded-md p-4 bg-gray-100 transition-all duration-300 ease-in-out transform scale-95 opacity-0 animate-fade-in"
-                            >
-                                {/* Filter by Category */}
-                                <div className="flex flex-col space-y-2">
-                                    <label htmlFor="category-select" className="text-sm font-medium">
-                                        Filtrar por Categoría
-                                    </label>
-                                    <MultiSelect
-                                        id="category-select"
-                                        options={categories.map((category) => ({ label: category, value: category }))}
-                                        selectedValues={selectedCategories}
-                                        onSelectionChange={setSelectedCategories}
-                                        placeholder="Seleccionar categorías"
-                                    />
-                                </div>
-
-                                {/* Filter by Vendor */}
-                                <div className="flex flex-col space-y-2">
-                                    <label htmlFor="vendor-select" className="text-sm font-medium">
-                                        Filtrar por Vendedor
-                                    </label>
-                                    <MultiSelect
-                                        id="vendor-select"
-                                        options={vendors}
-                                        selectedValues={selectedVendors}
-                                        onSelectionChange={setSelectedVendors}
-                                        placeholder="Seleccionar vendedores"
-                                    />
-                                </div>
-
-                                {/* Filter by Price Range */}
-                                <div className="space-y-2">
-                                    <label htmlFor="price-range" className="text-sm font-medium">
-                                        Rango de Precios: Bs {(priceRange[0] * 6.96).toFixed(2)} - Bs {(priceRange[1] * 6.96).toFixed(2)}
-                                    </label>
-                                    <div className="flex items-center space-x-4">
-                                        <Input
-                                            type="number"
-                                            value={priceRange[0]}
-                                            onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                                            className="w-20"
-                                        />
-                                        <div className="flex-1 px-2">
-                                            <Slider
-                                                min={0}
-                                                max={1000}
-                                                step={10}
-                                                value={priceRange}
-                                                onValueChange={setPriceRange}
-                                                className="relative flex items-center select-none touch-none w-full"
-                                            />
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            value={priceRange[1]}
-                                            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                                            className="w-20"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            <AdvancedFilters
+                                categories={categories}
+                                selectedCategories={selectedCategories}
+                                setSelectedCategories={setSelectedCategories}
+                                vendors={vendors}
+                                selectedVendors={selectedVendors}
+                                setSelectedVendors={setSelectedVendors}
+                                priceRange={priceRange}
+                                setPriceRange={setPriceRange}
+                            />
                         )}
-
-                        {/* Productos */}
                         {loading ? (
-                            <div className="flex justify-center items-center h-[400px]">
-                                <p>Cargando productos...</p>
+                            <div className="flex flex-col justify-center items-center h-[400px]">
+                                <svg className="animate-spin h-10 w-10 text-primary mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                <p className="text-primary font-medium">Cargando productos...</p>
                             </div>
                         ) : (
                             <ScrollArea className="h-[400px] w-full rounded-md border p-4">
                                 {catalogItems.items && catalogItems.items.length > 0 ? (
-                                    catalogItems.items.map((item, index) => (
-                                        <div key={item.id}>
-                                            <Card className="bg-card cursor-pointer">
-                                                <CardContent className="flex items-center p-4">
-                                                    <div
-                                                        className="flex items-center flex-grow cursor-pointer"
-                                                        onClick={() => handleItemClick(item)}
-                                                    >
-                                                        <Image
-                                                            src={item.imageUrl || "/assets/images/gift.svg"}
-                                                            alt={item.name || "Imagen del producto"}
-                                                            width={50}
-                                                            height={50}
-                                                            className="rounded-md mr-4"
-                                                        />
-                                                        <div>
-                                                            <h3 className="font-semibold">{item.name}</h3>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Bs {(item.price).toFixed(2)}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Abrir menú</span>
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            {selectedGifts.some(gift => gift.id === item.id) ? (
-                                                                <DropdownMenuItem disabled className="text-green-600 cursor-default">
-                                                                    ✓ Ya agregado a la lista
-                                                                </DropdownMenuItem>
-                                                            ) : (
-                                                                <DropdownMenuItem onClick={() => addGiftToList(item)}>
-                                                                    <Plus className="mr-2 h-4 w-4" />
-                                                                    Agregar a Lista de Regalos
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
+                                    catalogItems.items.map((item) => (
+                                        <CatalogItemCard
+                                            key={item.id}
+                                            item={item}
+                                            onItemClick={handleItemClick}
+                                            onAddGift={addGiftToList}
+                                            isAdded={selectedGifts.some(gift => gift.id === item.id)}
+                                        />
                                     ))
                                 ) : (
                                     <p>No hay productos disponibles.</p>
@@ -429,51 +311,21 @@ export function GiftSelection({
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                            {Array.isArray(selectedGifts) && selectedGifts.map((item, index) => (
-                                <div key={item.id}>
-                                    <Card className="bg-card">
-                                        <CardContent className="flex items-center justify-between py-4">
-                                            <div className="flex items-center space-x-4">
-                                                <Gift className="h-6 w-4 text-primary" />
-                                                <div>
-                                                    <h3 className="font-semibold">{item.name}</h3>
-                                                    <p className="text-sm text-muted-foreground">Bs {(item.price).toFixed(2)}</p>
-                                                    {item.referenceUrl && (
-                                                        <a
-                                                            href={item.referenceUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-sm text-blue-500 hover:underline"
-                                                        >
-                                                            Ver referencia
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    value={item.quantity || 1}
-                                                    onChange={(e) => {
-                                                        const newQuantity = parseInt(e.target.value);
-                                                        if (newQuantity > 0) {
-                                                            setSelectedGifts(prevGifts =>
-                                                                prevGifts.map(gift =>
-                                                                    gift.id === item.id ? { ...gift, quantity: newQuantity } : gift
-                                                                )
-                                                            );
-                                                        }
-                                                    }}
-                                                    className="w-16 text-center"
-                                                />
-                                                <Button variant="destructive" size="icon" onClick={() => removeGift(item.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </div>
+                            {Array.isArray(selectedGifts) && selectedGifts.map((item) => (
+                                <SelectedGiftCard
+                                    key={item.id}
+                                    item={item}
+                                    onRemove={removeGift}
+                                    onQuantityChange={(newQuantity) => {
+                                        if (newQuantity > 0) {
+                                            setSelectedGifts(prevGifts =>
+                                                prevGifts.map(gift =>
+                                                    gift.id === item.id ? { ...gift, quantity: newQuantity } : gift
+                                                )
+                                            );
+                                        }
+                                    }}
+                                />
                             ))}
                         </ScrollArea>
                         <Alert className="mt-4">
@@ -489,7 +341,7 @@ export function GiftSelection({
                             className="mt-4 w-full"
                         >
                             Agregar Producto Personalizado
-                        </Button> {/* Added button to open custom product modal */}
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
@@ -500,7 +352,7 @@ export function GiftSelection({
                     onClose={() => setIsModalOpen(false)}
                 />
             )}
-            <CustomProductModal // Added CustomProductModal component
+            <CustomProductModal
                 isOpen={isCustomProductModalOpen}
                 onClose={() => setIsCustomProductModalOpen(false)}
                 onAddProduct={handleAddCustomProduct}
@@ -510,6 +362,186 @@ export function GiftSelection({
                 <Button onClick={handleSaveAndNext}>Siguiente</Button>
             </div>
         </div>
-    )
+    );
+}
+
+// --- Componentes auxiliares extraídos ---
+
+interface AdvancedFiltersProps {
+    categories: string[];
+    selectedCategories: string[];
+    setSelectedCategories: (values: string[]) => void;
+    vendors: { label: string; value: string }[];
+    selectedVendors: string[];
+    setSelectedVendors: (values: string[]) => void;
+    priceRange: [number, number];
+    setPriceRange: (values: [number, number]) => void;
+}
+
+function AdvancedFilters({
+    categories,
+    selectedCategories,
+    setSelectedCategories,
+    vendors,
+    selectedVendors,
+    setSelectedVendors,
+    priceRange,
+    setPriceRange,
+}: AdvancedFiltersProps) {
+    return (
+        <div className="space-y-4 border rounded-md p-4 bg-gray-100 transition-all duration-300 ease-in-out transform scale-95 opacity-0 animate-fade-in">
+            <div className="flex flex-col space-y-2">
+                <label htmlFor="category-select" className="text-sm font-medium">
+                    Filtrar por Categoría
+                </label>
+                <MultiSelect
+                    id="category-select"
+                    options={categories.map((category) => ({ label: category, value: category }))}
+                    selectedValues={selectedCategories}
+                    onSelectionChange={setSelectedCategories}
+                    placeholder="Seleccionar categorías"
+                />
+            </div>
+            <div className="flex flex-col space-y-2">
+                <label htmlFor="vendor-select" className="text-sm font-medium">
+                    Filtrar por Vendedor
+                </label>
+                <MultiSelect
+                    id="vendor-select"
+                    options={vendors}
+                    selectedValues={selectedVendors}
+                    onSelectionChange={setSelectedVendors}
+                    placeholder="Seleccionar vendedores"
+                />
+            </div>
+            <div className="space-y-2">
+                <label htmlFor="price-range" className="text-sm font-medium">
+                    Rango de Precios: Bs {(priceRange[0] * 6.96).toFixed(2)} - Bs {(priceRange[1] * 6.96).toFixed(2)}
+                </label>
+                <div className="flex items-center space-x-4">
+                    <Input
+                        type="number"
+                        value={priceRange[0]}
+                        onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                        className="w-20"
+                    />
+                    <div className="flex-1 px-2">
+                        <Slider
+                            min={0}
+                            max={1000}
+                            step={10}
+                            value={priceRange}
+                            onValueChange={setPriceRange}
+                            className="relative flex items-center select-none touch-none w-full"
+                        />
+                    </div>
+                    <Input
+                        type="number"
+                        value={priceRange[1]}
+                        onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                        className="w-20"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface CatalogItemCardProps {
+    item: CatalogItem;
+    onItemClick: (item: CatalogItem) => void;
+    onAddGift: (item: CatalogItem) => void;
+    isAdded: boolean;
+}
+
+function CatalogItemCard({ item, onItemClick, onAddGift, isAdded }: CatalogItemCardProps) {
+    return (
+        <Card className="bg-card cursor-pointer">
+            <CardContent className="flex items-center p-4">
+                <div
+                    className="flex items-center flex-grow cursor-pointer"
+                    onClick={() => onItemClick(item)}
+                >
+                    <Image
+                        src={item.imageUrl || "/assets/images/gift.svg"}
+                        alt={item.name || "Imagen del producto"}
+                        width={50}
+                        height={50}
+                        className="rounded-md mr-4"
+                    />
+                    <div>
+                        <h3 className="font-semibold">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Bs {(item.price).toFixed(2)}
+                        </p>
+                    </div>
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menú</span>
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {isAdded ? (
+                            <DropdownMenuItem disabled className="text-green-600 cursor-default">
+                                ✓ Ya agregado a la lista
+                            </DropdownMenuItem>
+                        ) : (
+                            <DropdownMenuItem onClick={() => onAddGift(item)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Agregar a Lista de Regalos
+                            </DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </CardContent>
+        </Card>
+    );
+}
+
+interface SelectedGiftCardProps {
+    item: CatalogItem;
+    onRemove: (id: string) => void;
+    onQuantityChange: (quantity: number) => void;
+}
+
+function SelectedGiftCard({ item, onRemove, onQuantityChange }: SelectedGiftCardProps) {
+    return (
+        <Card className="bg-card">
+            <CardContent className="flex items-center justify-between py-4">
+                <div className="flex items-center space-x-4">
+                    <Gift className="h-6 w-4 text-primary" />
+                    <div>
+                        <h3 className="font-semibold">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground">Bs {(item.price).toFixed(2)}</p>
+                        {item.referenceUrl && (
+                            <a
+                                href={item.referenceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-500 hover:underline"
+                            >
+                                Ver referencia
+                            </a>
+                        )}
+                    </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity || 1}
+                        onChange={(e) => onQuantityChange(parseInt(e.target.value))}
+                        className="w-16 text-center"
+                    />
+                    <Button variant="destructive" size="icon" onClick={() => onRemove(item.id)}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
 }
 
