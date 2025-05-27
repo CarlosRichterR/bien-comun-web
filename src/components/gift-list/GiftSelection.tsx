@@ -65,7 +65,7 @@ export function GiftSelection({
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
-    const [vendors, setVendors] = useState<{ label: string; value: string }[]>([]);
+    const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
     const [selectedVendor, setSelectedVendor] = useState<string>('Todos');
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
@@ -137,11 +137,7 @@ export function GiftSelection({
                 });
                 if (!response.ok) throw new Error('Failed to fetch suppliers');
                 const data = await response.json();
-                const supplierOptions = data.map((supplier: { id: number; name: string }) => ({
-                    label: supplier.name,
-                    value: supplier.id.toString(),
-                }));
-                setVendors(supplierOptions);
+                setVendors(data); // vendors ahora es la lista de proveedores completa
             } catch (error) {
                 console.error('Error fetching suppliers:', error);
             }
@@ -172,7 +168,7 @@ export function GiftSelection({
     };
 
     const addGiftToList = (item: CatalogItem) => {
-        setSelectedGifts(prevGifts => [...prevGifts, item]);
+        setSelectedGifts(prevGifts => [...prevGifts, { ...item, quantity: 1 }]);
         setCatalogItems(prevCatalog => ({
             ...prevCatalog,
             items: prevCatalog.items.filter(catalogItem => catalogItem.id !== item.id),
@@ -350,6 +346,10 @@ export function GiftSelection({
                     item={selectedItem}
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
+                    onAddGift={(item) => {
+                        addGiftToList({ ...item, quantity: 1 });
+                        setIsModalOpen(false);
+                    }}
                 />
             )}
             <CustomProductModal
@@ -371,7 +371,7 @@ interface AdvancedFiltersProps {
     categories: string[];
     selectedCategories: string[];
     setSelectedCategories: (values: string[]) => void;
-    vendors: { label: string; value: string }[];
+    vendors: { id: number; name: string }[];
     selectedVendors: string[];
     setSelectedVendors: (values: string[]) => void;
     priceRange: [number, number];
@@ -408,7 +408,7 @@ function AdvancedFilters({
                 </label>
                 <MultiSelect
                     id="vendor-select"
-                    options={vendors}
+                    options={vendors.map((vendor) => ({ label: vendor.name, value: vendor.id.toString() }))}
                     selectedValues={selectedVendors}
                     onSelectionChange={setSelectedVendors}
                     placeholder="Seleccionar vendedores"
