@@ -15,12 +15,10 @@ interface ItemDetailsModalProps {
 export function ItemDetailsModal({ item, isOpen, onClose, onAddGift }: ItemDetailsModalProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-    // Mock multiple images for the carousel
-    const images = [
-        item.imageUrl,
-        "/placeholder.svg?height=300&width=300",
-        "/placeholder.svg?height=300&width=300",
-    ]
+    // Usar todas las imágenes de alta calidad si están disponibles
+    const images = item.imageUrls && item.imageUrls.length > 0
+        ? item.imageUrls
+        : ["/assets/images/gift.svg"];
 
     const nextImage = () => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length)
@@ -42,29 +40,33 @@ export function ItemDetailsModal({ item, isOpen, onClose, onAddGift }: ItemDetai
                     <div className="flex flex-col items-center justify-center">
                         <div className="relative aspect-square w-full max-w-[350px] flex justify-center items-center">
                             <Image
-                                src={images[currentImageIndex] || "/placeholder.svg"}
+                                src={images[currentImageIndex]}
                                 alt={item.name}
                                 width={350}
                                 height={350}
-                                objectFit="contain"
                                 className="rounded-lg"
+                                onError={(e) => (e.currentTarget as HTMLImageElement).src = "/assets/images/gift.svg"}
                             />
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="absolute left-2 top-1/2 transform -translate-y-1/2"
-                                onClick={prevImage}
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                onClick={nextImage}
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
+                            {images.length > 1 && (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="absolute left-2 top-1/2 transform -translate-y-1/2"
+                                        onClick={prevImage}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                        onClick={nextImage}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
                     {/* Columna derecha: Información y botones */}
@@ -76,7 +78,7 @@ export function ItemDetailsModal({ item, isOpen, onClose, onAddGift }: ItemDetai
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-bold">Precio:</span>
-                                <span>Bs {(item.price * 6.96).toFixed(2)}</span>
+                                <span>Bs {(item.price).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-bold">Categoría:</span>

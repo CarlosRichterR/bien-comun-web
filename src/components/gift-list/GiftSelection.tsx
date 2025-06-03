@@ -59,14 +59,7 @@ export function GiftSelection({
         totalPages: 1,
         itemsPerPage: 20,
     });
-    const [categories, setCategories] = useState<string[]>([]);
-    const [currentCategory, setCurrentCategory] = useState("Todos");
-    const [loadingCategories, setLoadingCategories] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
     const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
-    const [selectedVendor, setSelectedVendor] = useState<string>('Todos');
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,6 +68,9 @@ export function GiftSelection({
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
 
     // --- Efectos ---
     useEffect(() => {
@@ -105,28 +101,7 @@ export function GiftSelection({
             }
         };
         fetchItems();
-    }, [currentPage, currentCategory, searchTerm, selectedVendor, priceRange]);
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            setLoadingCategories(true);
-            try {
-                const response = await fetch(`${process.env.API_URL}/api/categories`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                });
-                if (!response.ok) throw new Error('Failed to fetch categories');
-                const data = await response.json();
-                const categoryNames = data.map((category: { id: number; name: string }) => category.name);
-                setCategories(["Todos", ...categoryNames]);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            } finally {
-                setLoadingCategories(false);
-            }
-        };
-        fetchCategories();
-    }, []);
+    }, [currentPage, catalogItems.itemsPerPage]);
 
     useEffect(() => {
         const fetchSuppliers = async () => {
@@ -137,7 +112,7 @@ export function GiftSelection({
                 });
                 if (!response.ok) throw new Error('Failed to fetch suppliers');
                 const data = await response.json();
-                setVendors(data); // vendors ahora es la lista de proveedores completa
+                setVendors(data);
             } catch (error) {
                 console.error('Error fetching suppliers:', error);
             }
@@ -193,8 +168,6 @@ export function GiftSelection({
         setCurrentPage(1);
     };
 
-    const handlePageChange = (page: number) => setCurrentPage(page);
-
     const handleSave = (newStatus?: 'draft' | 'published') => {
         const updatedStatus = newStatus || status;
         onSave(selectedGifts, updatedStatus);
@@ -225,6 +198,8 @@ export function GiftSelection({
     // --- Render ---
     const eventTypeLabel = getEventTypeLabel(eventType as EventType);
     const showCustomType = eventTypeLabel === "Otro" ? customEventType : eventTypeLabel;
+
+    const totalPages = catalogItems.totalPages;
 
     return (
         <div className="bg-background">
@@ -264,7 +239,7 @@ export function GiftSelection({
                     <CardContent>
                         {showAdvancedFilters && (
                             <AdvancedFilters
-                                categories={categories}
+                                categories={[]}
                                 selectedCategories={selectedCategories}
                                 setSelectedCategories={setSelectedCategories}
                                 vendors={vendors}
@@ -298,6 +273,21 @@ export function GiftSelection({
                                     <p>No hay productos disponibles.</p>
                                 )}
                             </ScrollArea>
+                        )}
+                        {/* Paginación */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center mt-4 space-x-2">
+                                {Array.from({ length: totalPages }, (_, i) => (
+                                    <Button
+                                        key={i + 1}
+                                        variant={currentPage === i + 1 ? "secondary" : "outline"}
+                                        size="sm"
+                                        onClick={() => setCurrentPage(i + 1)}
+                                    >
+                                        {i + 1}
+                                    </Button>
+                                ))}
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -455,6 +445,8 @@ interface CatalogItemCardProps {
 }
 
 function CatalogItemCard({ item, onItemClick, onAddGift, isAdded }: CatalogItemCardProps) {
+    const [imgSrc, setImgSrc] = useState(item.thumbnailUrl || "/assets/images/gift.svg");
+
     return (
         <Card className="bg-card cursor-pointer">
             <CardContent className="flex items-center p-4">
@@ -463,11 +455,12 @@ function CatalogItemCard({ item, onItemClick, onAddGift, isAdded }: CatalogItemC
                     onClick={() => onItemClick(item)}
                 >
                     <Image
-                        src={item.imageUrl || "/assets/images/gift.svg"}
+                        src={imgSrc}
                         alt={item.name || "Imagen del producto"}
                         width={50}
                         height={50}
                         className="rounded-md mr-4"
+                        onError={() => setImgSrc("/assets/images/gift.svg")}
                     />
                     <div>
                         <h3 className="font-semibold">{item.name}</h3>
@@ -508,11 +501,19 @@ interface SelectedGiftCardProps {
 }
 
 function SelectedGiftCard({ item, onRemove, onQuantityChange }: SelectedGiftCardProps) {
+    const [imgSrc, setImgSrc] = useState(item.thumbnailUrl || "/assets/images/gift.svg");
     return (
         <Card className="bg-card">
             <CardContent className="flex items-center justify-between py-4">
                 <div className="flex items-center space-x-4">
-                    <Gift className="h-6 w-4 text-primary" />
+                    <Image
+                        src={imgSrc}
+                        alt={item.name || "Imagen del producto"}
+                        width={40}
+                        height={40}
+                        className="rounded-md"
+                        onError={() => setImgSrc("/assets/images/gift.svg")}
+                    />
                     <div>
                         <h3 className="font-semibold">{item.name}</h3>
                         <p className="text-sm text-muted-foreground">Bs {(item.price).toFixed(2)}</p>
