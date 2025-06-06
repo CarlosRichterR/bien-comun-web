@@ -71,6 +71,7 @@ export function GiftSelection({
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
+    const [modalMode, setModalMode] = useState<'catalog' | 'selected'>('catalog');
 
     // --- Efectos ---
     useEffect(() => {
@@ -176,6 +177,13 @@ export function GiftSelection({
 
     const handleItemClick = (item: CatalogItem) => {
         setSelectedItem(item);
+        setModalMode('catalog');
+        setIsModalOpen(true);
+    };
+
+    const handleSelectedGiftClick = (item: CatalogItem) => {
+        setSelectedItem(item);
+        setModalMode('selected');
         setIsModalOpen(true);
     };
 
@@ -200,6 +208,9 @@ export function GiftSelection({
     const showCustomType = eventTypeLabel === "Otro" ? customEventType : eventTypeLabel;
 
     const totalPages = catalogItems.totalPages;
+
+    const formatBs = (value: number) =>
+        value.toLocaleString('es-BO', { style: 'currency', currency: 'BOB', minimumFractionDigits: 2 }).replace('BOB', 'Bs');
 
     return (
         <div className="bg-background">
@@ -311,6 +322,7 @@ export function GiftSelection({
                                             );
                                         }
                                     }}
+                                    onShowDetails={handleSelectedGiftClick}
                                 />
                             ))}
                         </ScrollArea>
@@ -318,8 +330,8 @@ export function GiftSelection({
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Resumen de la Lista de Regalos</AlertTitle>
                             <AlertDescription>
-                                Valor Total de Regalos: <span className={totalGiftValue > suggestedTotalAmount ? "text-red-500" : "text-green-500"}>Bs {(totalGiftValue).toFixed(2)}</span><br />
-                                Monto Total Sugerido: Bs {(suggestedTotalAmount).toFixed(2)} (basado en {guestCount} invitados a Bs {(minContribution).toFixed(2)} cada uno)
+                                Valor Total de Regalos: <span className={totalGiftValue > suggestedTotalAmount ? "text-red-500" : "text-green-500"}>{formatBs(totalGiftValue)}</span><br />
+                                Monto Total Sugerido: {formatBs(suggestedTotalAmount)} (basado en {guestCount} invitados a {formatBs(minContribution)} cada uno)
                             </AlertDescription>
                         </Alert>
                         <Button
@@ -336,10 +348,15 @@ export function GiftSelection({
                     item={selectedItem}
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    onAddGift={(item) => {
+                    onAddGift={modalMode === 'catalog' ? (item) => {
                         addGiftToList({ ...item, quantity: 1 });
                         setIsModalOpen(false);
-                    }}
+                    } : undefined}
+                    onRemoveGift={modalMode === 'selected' ? (id) => {
+                        removeGift(id);
+                        setIsModalOpen(false);
+                    } : undefined}
+                    mode={modalMode}
                 />
             )}
             <CustomProductModal
@@ -500,10 +517,10 @@ interface SelectedGiftCardProps {
     onQuantityChange: (quantity: number) => void;
 }
 
-function SelectedGiftCard({ item, onRemove, onQuantityChange }: SelectedGiftCardProps) {
+function SelectedGiftCard({ item, onRemove, onQuantityChange, onShowDetails }: SelectedGiftCardProps & { onShowDetails: (item: CatalogItem) => void }) {
     const [imgSrc, setImgSrc] = useState(item.thumbnailUrl || "/assets/images/gift.svg");
     return (
-        <Card className="bg-card">
+        <Card className="bg-card cursor-pointer" onClick={() => onShowDetails(item)}>
             <CardContent className="flex items-center justify-between py-4">
                 <div className="flex items-center space-x-4">
                     <Image
@@ -523,13 +540,14 @@ function SelectedGiftCard({ item, onRemove, onQuantityChange }: SelectedGiftCard
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-sm text-blue-500 hover:underline"
+                                onClick={e => e.stopPropagation()}
                             >
                                 Ver referencia
                             </a>
                         )}
                     </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2" onClick={e => e.stopPropagation()}>
                     <Input
                         type="number"
                         min="1"

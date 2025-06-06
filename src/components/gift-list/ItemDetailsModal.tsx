@@ -9,10 +9,12 @@ interface ItemDetailsModalProps {
     item: CatalogItem;
     isOpen: boolean;
     onClose: () => void;
-    onAddGift: (item: CatalogItem) => void;
+    onAddGift?: (item: CatalogItem) => void;
+    onRemoveGift?: (id: string) => void;
+    mode?: 'catalog' | 'selected'; // Nuevo: para distinguir el flujo
 }
 
-export function ItemDetailsModal({ item, isOpen, onClose, onAddGift }: ItemDetailsModalProps) {
+export function ItemDetailsModal({ item, isOpen, onClose, onAddGift, onRemoveGift, mode = 'catalog' }: ItemDetailsModalProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
     // Usar todas las imágenes de alta calidad si están disponibles
@@ -109,7 +111,12 @@ export function ItemDetailsModal({ item, isOpen, onClose, onAddGift }: ItemDetai
                         </div>
                         <div className="flex justify-center gap-4 mt-8">
                             <Button variant="outline" onClick={onClose}>Cerrar</Button>
-                            <Button variant="default" onClick={() => { onAddGift({ ...item, quantity: 1 }); onClose(); }}>Agregar a Lista de Regalos</Button>
+                            {mode === 'catalog' && onAddGift && (
+                                <Button variant="default" onClick={() => { onAddGift({ ...item, quantity: 1 }); onClose(); }}>Agregar a Lista de Regalos</Button>
+                            )}
+                            {mode === 'selected' && onRemoveGift && (
+                                <Button variant="destructive" onClick={() => { onRemoveGift(item.id); onClose(); }}>Remover de lista</Button>
+                            )}
                         </div>
                     </div>
                 </div>
