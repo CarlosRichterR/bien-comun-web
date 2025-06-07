@@ -5,3 +5,4 @@ Antes de realizar cualquier cambio de código sugerido por Copilot o por un desa
 2. Comentar el análisis y discutirlo con el equipo o usuario solicitante.
 3. Esperar la aprobación o feedback.
 4. Solo después, proceder a aplicar el cambio de código.
+5. en modo agente, nunca implementar cambios de código sin aprobacion previa mía.

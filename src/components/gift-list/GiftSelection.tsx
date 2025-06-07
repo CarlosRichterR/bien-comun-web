@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Gift, Trash2, Search, AlertCircle, MoreVertical, Plus, Filter } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -72,6 +72,7 @@ export function GiftSelection({
     const [currentPage, setCurrentPage] = useState(1);
     const [status, setStatus] = useState<'draft' | 'published'>(initialStatus);
     const [modalMode, setModalMode] = useState<'catalog' | 'selected'>('catalog');
+    const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
     // --- Efectos ---
     useEffect(() => {
@@ -143,6 +144,43 @@ export function GiftSelection({
         }
     };
 
+    // Nueva función: búsqueda avanzada con POST
+    const searchProducts = async (
+        page: number,
+        pageSize: number,
+        searchTerm: string,
+        brand?: string,
+        supplierId?: number,
+        model?: string
+    ) => {
+        try {
+            const response = await fetch(
+                `${process.env.API_URL}/api/products/search`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        page,
+                        pageSize,
+                        search: searchTerm,
+                        brand,
+                        supplierId,
+                        model,
+                    }),
+                }
+            );
+            if (!response.ok) throw new Error('Failed to search products');
+            const data = await response.json();
+            return {
+                products: data.items as CatalogItem[],
+                totalCount: data.totalCount as number,
+            };
+        } catch (error) {
+            console.error('Error searching products:', error);
+            return { products: [], totalCount: 0 };
+        }
+    };
+
     const addGiftToList = (item: CatalogItem) => {
         setSelectedGifts(prevGifts => [...prevGifts, { ...item, quantity: 1 }]);
         setCatalogItems(prevCatalog => ({
@@ -164,9 +202,43 @@ export function GiftSelection({
         }
     };
 
+    // Modifica handleSearch para usar debounce
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
+        const value = e.target.value;
+        setSearchTerm(value);
         setCurrentPage(1);
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+        debounceTimeout.current = setTimeout(async () => {
+            if (value.trim().length > 0) {
+                setLoading(true);
+                const { products, totalCount } = await searchProducts(
+                    1,
+                    catalogItems.itemsPerPage,
+                    value
+                );
+                setCatalogItems({
+                    items: products,
+                    totalItems: totalCount,
+                    currentPage: 1,
+                    totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
+                    itemsPerPage: catalogItems.itemsPerPage,
+                });
+                setLoading(false);
+            } else {
+                setLoading(true);
+                const { products, totalCount } = await fetchPaginatedProducts(1, catalogItems.itemsPerPage);
+                setCatalogItems({
+                    items: products,
+                    totalItems: totalCount,
+                    currentPage: 1,
+                    totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
+                    itemsPerPage: catalogItems.itemsPerPage,
+                });
+                setLoading(false);
+            }
+        }, 1000); // 1s debounce
     };
 
     const handleSave = (newStatus?: 'draft' | 'published') => {
