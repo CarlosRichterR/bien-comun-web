@@ -61,7 +61,7 @@ export function GiftSelection({
     });
     const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCustomProductModalOpen, setIsCustomProductModalOpen] = useState(false);
