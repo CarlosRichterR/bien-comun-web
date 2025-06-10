@@ -49,3 +49,7 @@ next-env.d.ts
 /.vs/bien-comun-web/v17/
 *.vsidx
 /.vs/bien-comun-web/v17/
+.vs/bien-comun-web/CopilotIndices/17.13.430.18484/CodeChunks.db
+.gitignore
+.gitignore
+/.vs/bien-comun-web/CopilotIndices/17.13.430.18484
