@@ -60,6 +60,7 @@ export function GiftSelection({
         itemsPerPage: 20,
     });
     const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
+    const [categories, setCategories] = useState<string[]>([]);
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -120,6 +121,23 @@ export function GiftSelection({
             }
         };
         fetchSuppliers();
+    }, []);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch(`${process.env.API_URL}/api/categories`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (!response.ok) throw new Error('Failed to fetch categories');
+                const data: { name: string }[] = await response.json();
+                setCategories(data.map(cat => cat.name));
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+        fetchCategories();
     }, []);
 
     // --- Funciones auxiliares ---
@@ -322,7 +340,7 @@ export function GiftSelection({
                     <CardContent>
                         {showAdvancedFilters && (
                             <AdvancedFilters
-                                categories={[]}
+                                categories={categories}
                                 selectedCategories={selectedCategories}
                                 setSelectedCategories={setSelectedCategories}
                                 vendors={vendors}
