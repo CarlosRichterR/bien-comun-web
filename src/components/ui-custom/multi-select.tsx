@@ -61,42 +61,47 @@ export function MultiSelect({
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button
-                    id={id}
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className={cn("w-full justify-between", className)}
-                >
-                    {selectedValues.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 max-w-[90%] overflow-hidden">
-                            {selectedValues.length <= 2 ? (
-                                selectedLabels.map((label) => (
-                                    <Badge key={label} variant="secondary" className="mr-1">
-                                        {label}
-                                    </Badge>
-                                ))
-                            ) : (
-                                <span>{selectedValues.length} seleccionados</span>
-                            )}
-                        </div>
-                    ) : (
-                        <span className="text-muted-foreground">{placeholder}</span>
-                    )}
-                    <span className="ml-2 flex shrink-0 items-center gap-1">
-                        {selectedValues.length > 0 && (
-                            <X
-                                className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer"
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Evita que el clic en el ícono active el Popover
-                                    handleClear(); // Llama a la función para limpiar los filtros
-                                }}
-                            />
+            <div className="relative w-full">
+                <PopoverTrigger asChild>
+                    <Button
+                        id={id}
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className={cn("w-full justify-between", className)}
+                    >
+                        {selectedValues.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 max-w-[90%] overflow-hidden">
+                                {selectedValues.length <= 2 ? (
+                                    selectedLabels.map((label) => (
+                                        <Badge key={label} variant="secondary" className="mr-1">
+                                            {label}
+                                        </Badge>
+                                    ))
+                                ) : (
+                                    <span>{selectedValues.length} seleccionados</span>
+                                )}
+                            </div>
+                        ) : (
+                            <span className="text-muted-foreground">{placeholder}</span>
                         )}
-                    </span>
-                </Button>
-            </PopoverTrigger>
+                    </Button>
+                </PopoverTrigger>
+                {selectedValues.length > 0 && (
+                    <button
+                        type="button"
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer bg-transparent border-0 p-0"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleClear();
+                        }}
+                        aria-label="Limpiar selección"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+            </div>
             <PopoverContent className="w-full p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Buscar..." />

@@ -169,7 +169,9 @@ export function GiftSelection({
         searchTerm: string,
         brand?: string,
         supplierId?: number,
-        model?: string
+        model?: string,
+        categories?: string[],
+        priceRange?: [number, number]
     ) => {
         try {
             const response = await fetch(
@@ -184,6 +186,8 @@ export function GiftSelection({
                         brand,
                         supplierId,
                         model,
+                        categories,
+                        priceRange,
                     }),
                 }
             );
@@ -197,6 +201,31 @@ export function GiftSelection({
             console.error('Error searching products:', error);
             return { products: [], totalCount: 0 };
         }
+    };
+
+    // --- Nueva función para aplicar filtros avanzados ---
+    const handleApplyFilters = async () => {
+        setLoading(true);
+        const supplierId = selectedVendors.length === 1 ? Number(selectedVendors[0]) : undefined;
+        const { products, totalCount } = await searchProducts(
+            1,
+            catalogItems.itemsPerPage,
+            searchTerm,
+            undefined, // brand
+            supplierId,
+            undefined, // model
+            selectedCategories,
+            priceRange
+        );
+        setCatalogItems({
+            items: products,
+            totalItems: totalCount,
+            currentPage: 1,
+            totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
+            itemsPerPage: catalogItems.itemsPerPage,
+        });
+        setCurrentPage(1);
+        setLoading(false);
     };
 
     const addGiftToList = (item: CatalogItem) => {
@@ -342,12 +371,15 @@ export function GiftSelection({
                             <AdvancedFilters
                                 categories={categories}
                                 selectedCategories={selectedCategories}
-                                setSelectedCategories={setSelectedCategories}
+                                setSelectedCategories={(values) => {
+                                    setSelectedCategories(values);
+                                }}
                                 vendors={vendors}
                                 selectedVendors={selectedVendors}
                                 setSelectedVendors={setSelectedVendors}
                                 priceRange={priceRange}
                                 setPriceRange={setPriceRange}
+                                onApplyFilters={handleApplyFilters}
                             />
                         )}
                         {loading ? (
@@ -473,6 +505,7 @@ interface AdvancedFiltersProps {
     setSelectedVendors: (values: string[]) => void;
     priceRange: [number, number];
     setPriceRange: (values: [number, number]) => void;
+    onApplyFilters: () => void;
 }
 
 function AdvancedFilters({
@@ -484,6 +517,7 @@ function AdvancedFilters({
     setSelectedVendors,
     priceRange,
     setPriceRange,
+    onApplyFilters,
 }: AdvancedFiltersProps) {
     return (
         <div className="space-y-4 border rounded-md p-4 bg-gray-100 transition-all duration-300 ease-in-out transform scale-95 opacity-0 animate-fade-in">
@@ -513,7 +547,7 @@ function AdvancedFilters({
             </div>
             <div className="space-y-2">
                 <label htmlFor="price-range" className="text-sm font-medium">
-                    Rango de Precios: Bs {(priceRange[0] * 6.96).toFixed(2)} - Bs {(priceRange[1] * 6.96).toFixed(2)}
+                    Rango de Precios: Bs {priceRange[0].toFixed(2)} - Bs {priceRange[1].toFixed(2)}
                 </label>
                 <div className="flex items-center space-x-4">
                     <Input
@@ -539,6 +573,12 @@ function AdvancedFilters({
                         className="w-20"
                     />
                 </div>
+            </div>
+            <div className="flex justify-center pt-2">
+                <Button onClick={onApplyFilters} className="w-full md:w-auto max-w-xs flex items-center justify-center gap-2">
+                    <Filter className="h-5 w-5" />
+                    Aplicar filtros
+                </Button>
             </div>
         </div>
     );
