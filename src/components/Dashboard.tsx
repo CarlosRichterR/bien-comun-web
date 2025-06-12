@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { PlusCircle, Edit, Eye, QrCode, Bell, BarChart, Trash } from 'lucide-react'
+import { PlusCircle, Edit, Eye, QrCode, Bell, BarChart, Trash, ArrowUpRight } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -87,16 +87,34 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                     </Badge>
                                 </CardTitle>
                                 {/* Notification icon-only button below the status chip */}
-                                <div className="flex justify-end mt-2">
-                                    <Button
-                                        size="icon"
-                                        variant="outline" // Cambiado de 'ghost' a 'outline' para borde
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => onViewNotifications(list.id)}
-                                        aria-label="Ver notificaciones"
-                                    >
-                                        <Bell className="h-5 w-5" />
-                                    </Button>
+                                <div className="flex justify-end mt-2 gap-2">
+                                    <div className="relative group">
+                                        <Button
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-8 w-8 p-0"
+                                            aria-label="Ir a la lista publicada"
+                                        >
+                                            <ArrowUpRight className="h-5 w-5" />
+                                        </Button>
+                                        <span className="absolute z-10 left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-white text-gray-900 border border-gray-200 shadow text-xs opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                                            Ir a la lista publicada
+                                        </span>
+                                    </div>
+                                    <div className="relative group">
+                                        <Button
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => onViewNotifications(list.id)}
+                                            aria-label="Ver notificaciones"
+                                        >
+                                            <Bell className="h-5 w-5" />
+                                        </Button>
+                                        <span className="absolute z-10 left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-white text-gray-900 border border-gray-200 shadow text-xs opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                                            Ver notificaciones
+                                        </span>
+                                    </div>
                                 </div>
                                 <CardDescription className="mt-1 text-gray-500">
                                     Creada el {list.eventDate ? String(list.eventDate).split("T")[0] : ""}
