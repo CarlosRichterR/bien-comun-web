@@ -10,6 +10,7 @@ export interface GiftList {
   campaignStartDate?: string;
   campaignEndDate?: string;
   address?: string;
+  productCount: number;
   // Agrega más campos según el modelo real
 }
 

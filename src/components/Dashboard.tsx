@@ -10,20 +10,16 @@ import { QRCodeSVG } from 'qrcode.react'
 import { mockProgressReportData } from "../utils/mockData";
 import { fetchGiftLists, GiftList } from "@/services/listService"
 import { deleteGiftList } from "@/services/listService"
+import { getEventTypeLabel } from "@/lib/getEventTypeLabel";
 
-// Updated mock data to include status
-const mockLists = [
-    { id: 1, name: "Lista de Regalos de Boda", date: "2023-12-15", itemCount: 25, eventType: "Boda", status: "published" },
-    { id: 2, name: "Regalos para Baby Shower", date: "2024-02-01", itemCount: 15, eventType: "Baby Shower", status: "draft" },
-    { id: 3, name: "Lista de Deseos de Cumpleaños", date: "2024-03-10", itemCount: 10, eventType: "Cumpleaños", status: "published" },
-]
+// Removed unused mockLists and EventType import
 
 interface DashboardProps {
     onCreateNewList: () => void;
     onEditList: (listId: number, status: 'draft' | 'published') => void;
     onViewList: (listId: number) => void;
     onViewNotifications: (listId: number) => void;
-    onViewProgressReport: (listId: number, progressReportData: any) => void; // Updated prop type
+    onViewProgressReport: (listId: number, progressReportData: unknown) => void; // Updated prop type
 }
 
 export default function Dashboard({ onCreateNewList, onEditList, onViewList, onViewNotifications, onViewProgressReport }: DashboardProps) {
@@ -51,7 +47,7 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
             const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement
             if (canvas) {
                 const pngUrl = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream')
-                let downloadLink = document.createElement('a')
+                const downloadLink = document.createElement('a')
                 downloadLink.href = pngUrl
                 downloadLink.download = `qr-code-${selectedQRCode.name}.png`
                 document.body.appendChild(downloadLink)
@@ -90,13 +86,25 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                         {list.listStatus === "publish" ? "Publicada" : "Borrador"}
                                     </Badge>
                                 </CardTitle>
+                                {/* Notification icon-only button below the status chip */}
+                                <div className="flex justify-end mt-2">
+                                    <Button
+                                        size="icon"
+                                        variant="outline" // Cambiado de 'ghost' a 'outline' para borde
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => onViewNotifications(list.id)}
+                                        aria-label="Ver notificaciones"
+                                    >
+                                        <Bell className="h-5 w-5" />
+                                    </Button>
+                                </div>
                                 <CardDescription className="mt-1 text-gray-500">
                                     Creada el {list.eventDate ? String(list.eventDate).split("T")[0] : ""}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow">
-                                <p className="mb-1 font-medium">{(list.guestCount ?? 0)} artículos</p>
-                                <p className="text-sm text-gray-600">Tipo de Evento: {list.eventType ?? 0}</p>
+                                <p className="mb-1 font-medium">{list.productCount} artículos</p>
+                                <p className="text-sm text-gray-600">Tipo de Evento: {getEventTypeLabel(Number(list.eventType))}</p>
                             </CardContent>
                             <CardFooter className="flex flex-wrap gap-2 justify-between">
                                 {list.listStatus !== "publish" && (
@@ -118,10 +126,6 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                         Progreso
                                     </Button>
                                 )}
-                                <Button variant="outline" onClick={() => onViewNotifications(list.id)}>
-                                    <Bell className="mr-2 h-4 w-4" />
-                                    Notificaciones
-                                </Button>
                                 <Button variant="outline" onClick={() => handleShowQRCode({ id: list.id, name: list.listName })}>
                                     <QrCode className="mr-2 h-4 w-4" />
                                     QR
@@ -162,7 +166,7 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                     <DialogHeader>
                         <DialogTitle>¿Borrar lista?</DialogTitle>
                         <DialogDescription>
-                            ¿Estás seguro de que deseas borrar la lista "{listToDelete?.listName}"? Esta acción no se puede deshacer.
+                            ¿Estás seguro de que deseas borrar la lista &quot;{listToDelete?.listName}&quot;? Esta acción no se puede deshacer.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -174,8 +178,7 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                 await deleteGiftList(listToDelete.id);
                                 setLists(lists => lists.filter(l => l.id !== listToDelete.id));
                                 setListToDelete(null);
-                            } catch (e) {
-                                // Aquí podrías mostrar un toast de error
+                            } catch {
                                 setIsDeleting(false);
                             } finally {
                                 setIsDeleting(false);
