@@ -235,9 +235,8 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         if (selectedGifts.length === 0) messages.push('Selecciona al menos un regalo.');
         if (!listDetails.listName) messages.push('El nombre de la lista es obligatorio.');
         if (!listDetails.eventDate || new Date(listDetails.eventDate) <= new Date()) messages.push('Selecciona una fecha de evento válida.');
-        if (!listDetails.campaignStartDate) messages.push('Selecciona la fecha de inicio de la campaña.');
+        // Removidas las validaciones de fecha y hora de inicio de campaña
         if (!listDetails.campaignEndDate) messages.push('Selecciona la fecha de fin de la campaña.');
-        if (!listDetails.campaignStartTime) messages.push('Selecciona la hora de inicio de la campaña.');
         if (!listDetails.campaignEndTime) messages.push('Selecciona la hora de fin de la campaña.');
         if (!Array.isArray(listDetails.location) || listDetails.location.length !== 2) messages.push('Selecciona una ubicación en el mapa.');
         if (!listDetails.address) messages.push('La dirección es obligatoria.');
@@ -255,9 +254,8 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         selectedGifts.length > 0 &&
         !!listDetails.listName &&
         !!listDetails.eventDate && new Date(listDetails.eventDate) > new Date() &&
-        !!listDetails.campaignStartDate &&
+        // Eliminadas validaciones de campaignStartDate y campaignStartTime
         !!listDetails.campaignEndDate &&
-        !!listDetails.campaignStartTime &&
         !!listDetails.campaignEndTime &&
         Array.isArray(listDetails.location) && listDetails.location.length === 2 &&
         !!listDetails.address &&

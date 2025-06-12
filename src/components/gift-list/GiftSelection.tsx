@@ -58,7 +58,7 @@ export function GiftSelection({
         totalItems: 0,
         currentPage: 1,
         totalPages: 1,
-        itemsPerPage: 20,
+        itemsPerPage: 8,
     });
     const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
     const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);

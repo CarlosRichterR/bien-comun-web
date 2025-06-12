@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { PlusCircle, Edit, Eye, QrCode, Bell, BarChart } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { PlusCircle, Edit, Eye, QrCode, Bell, BarChart, Trash } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { QRCodeSVG } from 'qrcode.react'
 import { mockProgressReportData } from "../utils/mockData";
+import { fetchGiftLists, GiftList } from "@/services/listService"
+import { deleteGiftList } from "@/services/listService"
 
 // Updated mock data to include status
 const mockLists = [
@@ -25,8 +27,16 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onCreateNewList, onEditList, onViewList, onViewNotifications, onViewProgressReport }: DashboardProps) {
-    const [lists, setLists] = useState(mockLists)
+    const [lists, setLists] = useState<GiftList[]>([])
     const [selectedQRCode, setSelectedQRCode] = useState<{ id: number, name: string } | null>(null)
+    const [listToDelete, setListToDelete] = useState<GiftList | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    useEffect(() => {
+        fetchGiftLists()
+            .then(data => setLists(data))
+            .catch(() => setLists([]))
+    }, [])
 
     const handleShowQRCode = (list: { id: number, name: string }) => {
         setSelectedQRCode(list)
@@ -68,36 +78,42 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                         <Card key={list.id} className="flex flex-col">
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-center">
-                                    {list.name}
-                                    <Badge variant={list.status === "published" ? "default" : "secondary"}>
-                                        {list.status === "published" ? "Publicada" : "Borrador"}
+                                    <span className="text-lg font-bold leading-tight">{list.listName}</span>
+                                    <Badge
+                                        className={
+                                            list.listStatus === "publish"
+                                                ? "bg-pink-300 text-white"
+                                                : "bg-gray-400 text-white"
+                                        }
+                                        variant="secondary"
+                                    >
+                                        {list.listStatus === "publish" ? "Publicada" : "Borrador"}
                                     </Badge>
                                 </CardTitle>
-                                <CardDescription>Creada el {list.date}</CardDescription>
+                                <CardDescription className="mt-1 text-gray-500">
+                                    Creada el {list.eventDate ? String(list.eventDate).split("T")[0] : ""}
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow">
-                                <p>{list.itemCount} artículos</p>
-                                <p>Tipo de Evento: {list.eventType}</p>
+                                <p className="mb-1 font-medium">{(list.guestCount ?? 0)} artículos</p>
+                                <p className="text-sm text-gray-600">Tipo de Evento: {list.eventType ?? 0}</p>
                             </CardContent>
                             <CardFooter className="flex flex-wrap gap-2 justify-between">
-                                {list.status === "draft" && (
-                                    <Button variant="secondary" onClick={() => onEditList(list.id, list.status)}>
+                                {list.listStatus !== "publish" && (
+                                    <Button variant="outline" onClick={() => onEditList(list.id, list.listStatus === "publish" ? "published" : "draft")}> 
                                         <Edit className="mr-2 h-4 w-4" />
                                         Editar
                                     </Button>
                                 )}
                                 <Button
                                     variant="outline"
-                                    onClick={() => {
-                                        console.log('View button clicked for list:', list.id);
-                                        onViewList(list.id);
-                                    }}
+                                    onClick={() => onViewList(list.id)}
                                 >
                                     <Eye className="mr-2 h-4 w-4" />
                                     Ver
                                 </Button>
-                                {list.status === "published" && (
-                                    <Button variant="outline" onClick={() => onViewProgressReport(list.id, mockProgressReportData)}> {/* Updated onClick prop */}
+                                {list.listStatus === "publish" && (
+                                    <Button variant="outline" onClick={() => onViewProgressReport(list.id, mockProgressReportData)}>
                                         <BarChart className="mr-2 h-4 w-4" />
                                         Progreso
                                     </Button>
@@ -106,9 +122,13 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                     <Bell className="mr-2 h-4 w-4" />
                                     Notificaciones
                                 </Button>
-                                <Button variant="outline" onClick={() => handleShowQRCode(list)}>
+                                <Button variant="outline" onClick={() => handleShowQRCode({ id: list.id, name: list.listName })}>
                                     <QrCode className="mr-2 h-4 w-4" />
                                     QR
+                                </Button>
+                                <Button variant="outline" className="text-red-600 hover:bg-red-50" onClick={() => setListToDelete(list)}>
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Borrar
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -133,6 +153,36 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                     </div>
                     <DialogFooter>
                         <Button onClick={handleDownloadQRCode}>Descargar QR</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!listToDelete} onOpenChange={() => setListToDelete(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>¿Borrar lista?</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas borrar la lista "{listToDelete?.listName}"? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setListToDelete(null)} disabled={isDeleting}>Cancelar</Button>
+                        <Button variant="destructive" onClick={async () => {
+                            if (!listToDelete) return;
+                            setIsDeleting(true);
+                            try {
+                                await deleteGiftList(listToDelete.id);
+                                setLists(lists => lists.filter(l => l.id !== listToDelete.id));
+                                setListToDelete(null);
+                            } catch (e) {
+                                // Aquí podrías mostrar un toast de error
+                                setIsDeleting(false);
+                            } finally {
+                                setIsDeleting(false);
+                            }
+                        }} disabled={isDeleting}>
+                            {isDeleting ? 'Borrando...' : 'Borrar'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
