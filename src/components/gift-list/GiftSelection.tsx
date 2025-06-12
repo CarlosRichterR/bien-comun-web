@@ -22,6 +22,7 @@ import { CustomProductModal } from './CustomProductModal'
 import { MultiSelect } from "../ui-custom/multi-select"; 
 import { getEventTypeLabel } from "@/lib/getEventTypeLabel"
 import { EventType } from "@/types/enums/EventType"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface GiftSelectionProps {
     eventType: EventType | null;
@@ -60,7 +61,7 @@ export function GiftSelection({
         itemsPerPage: 20,
     });
     const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
-    const [categories, setCategories] = useState<string[]>([]);
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -131,8 +132,8 @@ export function GiftSelection({
                     headers: { 'Content-Type': 'application/json' },
                 });
                 if (!response.ok) throw new Error('Failed to fetch categories');
-                const data: { name: string }[] = await response.json();
-                setCategories(data.map(cat => cat.name));
+                const data: { id: number; name: string }[] = await response.json();
+                setCategories(data);
             } catch (error) {
                 console.error('Error fetching categories:', error);
             }
@@ -170,8 +171,10 @@ export function GiftSelection({
         brand?: string,
         supplierId?: number,
         model?: string,
-        categories?: string[],
-        priceRange?: [number, number]
+        categoryIds?: number[],
+        priceRange?: [number, number],
+        supplierIds?: number[],
+        isAdvancedSearch?: boolean
     ) => {
         try {
             const response = await fetch(
@@ -186,8 +189,10 @@ export function GiftSelection({
                         brand,
                         supplierId,
                         model,
-                        categories,
+                        categoryIds,
                         priceRange,
+                        supplierIds,
+                        isAdvancedSearch: !!isAdvancedSearch
                     }),
                 }
             );
@@ -206,22 +211,29 @@ export function GiftSelection({
     // --- Nueva función para aplicar filtros avanzados ---
     const handleApplyFilters = async () => {
         setLoading(true);
-        const supplierId = selectedVendors.length === 1 ? Number(selectedVendors[0]) : undefined;
-        const { products, totalCount } = await searchProducts(
+        const supplierIds = selectedVendors.map(Number);
+        const categoryIds = selectedCategories.map(Number);
+        // Si el usuario no tocó el filtro de precio, enviar null en vez de [0,0]
+        const isPriceRangeTouched = priceRange[0] !== 0 || priceRange[1] !== 0;
+        const priceRangeToSend = isPriceRangeTouched ? priceRange : null;
+        // Cuando se aplican filtros avanzados, ignorar el searchTerm
+        const result = await searchProducts(
             1,
             catalogItems.itemsPerPage,
-            searchTerm,
+            "", // searchTerm vacío
             undefined, // brand
-            supplierId,
+            undefined, // supplierId (usamos supplierIds array)
             undefined, // model
-            selectedCategories,
-            priceRange
+            categoryIds.length > 0 ? categoryIds : undefined,
+            priceRangeToSend,
+            supplierIds.length > 0 ? supplierIds : undefined,
+            true // isAdvancedSearch
         );
         setCatalogItems({
-            items: products,
-            totalItems: totalCount,
+            items: result.products,
+            totalItems: result.totalCount,
             currentPage: 1,
-            totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
+            totalPages: Math.ceil(result.totalCount / catalogItems.itemsPerPage),
             itemsPerPage: catalogItems.itemsPerPage,
         });
         setCurrentPage(1);
@@ -347,13 +359,45 @@ export function GiftSelection({
                         <CardTitle>Catálogo de Regalos</CardTitle>
                         <div className="relative flex items-center">
                             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                            <Input
-                                type="text"
-                                placeholder="Buscar regalos..."
-                                value={searchTerm}
-                                onChange={handleSearch}
-                                className="pl-8 flex-1"
-                            />
+                            <div className="relative flex-1">
+                                <Input
+                                    type="text"
+                                    placeholder="Buscar regalos..."
+                                    value={searchTerm}
+                                    onChange={handleSearch}
+                                    className={`pl-8 pr-8 w-full rounded-lg border ${searchTerm ? 'border-primary/60 ring-1 ring-primary/30' : ''} focus:border-primary focus:ring-2 focus:ring-primary/40 transition-all duration-150`}
+                                    disabled={showAdvancedFilters}
+                                    style={{ boxShadow: searchTerm ? '0 0 0 2px #a5b4fc33' : undefined }}
+                                />
+                                {searchTerm && searchTerm.length > 0 && (
+                                    <button
+                                        type="button"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary focus:outline-none bg-white rounded-full p-0.5 shadow-sm border border-gray-200 hover:border-primary transition-colors duration-150"
+                                        onClick={() => {
+                                            setSearchTerm("");
+                                            setCurrentPage(1);
+                                            setLoading(true);
+                                            fetchPaginatedProducts(1, catalogItems.itemsPerPage).then(({ products, totalCount }) => {
+                                                setCatalogItems({
+                                                    items: products,
+                                                    totalItems: totalCount,
+                                                    currentPage: 1,
+                                                    totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
+                                                    itemsPerPage: catalogItems.itemsPerPage,
+                                                });
+                                                setLoading(false);
+                                            });
+                                        }}
+                                        aria-label="Limpiar búsqueda"
+                                        tabIndex={0}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <circle cx="12" cy="12" r="10" fill="#f3f4f6" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9l6 6m0-6l-6 6" stroke="#64748b" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
                             <div className="ml-2">
                                 <Button
                                     variant={showAdvancedFilters ? "secondary" : "outline"}
@@ -380,6 +424,25 @@ export function GiftSelection({
                                 priceRange={priceRange}
                                 setPriceRange={setPriceRange}
                                 onApplyFilters={handleApplyFilters}
+                                onClearFilters={() => {
+                                    setSelectedCategories([]);
+                                    setSelectedVendors([]);
+                                    setPriceRange([0, 0]);
+                                    setShowAdvancedFilters(false);
+                                    // Query inicial (sin filtros)
+                                    setLoading(true);
+                                    fetchPaginatedProducts(1, catalogItems.itemsPerPage).then(({ products, totalCount }) => {
+                                        setCatalogItems({
+                                            items: products,
+                                            totalItems: totalCount,
+                                            currentPage: 1,
+                                            totalPages: Math.ceil(totalCount / catalogItems.itemsPerPage),
+                                            itemsPerPage: catalogItems.itemsPerPage,
+                                        });
+                                        setCurrentPage(1);
+                                        setLoading(false);
+                                    });
+                                }}
                             />
                         )}
                         {loading ? (
@@ -497,7 +560,7 @@ export function GiftSelection({
 // --- Componentes auxiliares extraídos ---
 
 interface AdvancedFiltersProps {
-    categories: string[];
+    categories: { id: number; name: string }[];
     selectedCategories: string[];
     setSelectedCategories: (values: string[]) => void;
     vendors: { id: number; name: string }[];
@@ -518,7 +581,15 @@ function AdvancedFilters({
     priceRange,
     setPriceRange,
     onApplyFilters,
-}: AdvancedFiltersProps) {
+    onClearFilters
+}: AdvancedFiltersProps & { onClearFilters?: () => void }) {
+    // Detecta si algún filtro fue tocado
+    const filtersTouched =
+        selectedCategories.length > 0 ||
+        selectedVendors.length > 0 ||
+        priceRange[0] !== 0 ||
+        priceRange[1] !== 0;
+
     return (
         <div className="space-y-4 border rounded-md p-4 bg-gray-100 transition-all duration-300 ease-in-out transform scale-95 opacity-0 animate-fade-in">
             <div className="flex flex-col space-y-2">
@@ -527,7 +598,7 @@ function AdvancedFilters({
                 </label>
                 <MultiSelect
                     id="category-select"
-                    options={categories.map((category) => ({ label: category, value: category }))}
+                    options={categories.map((category) => ({ label: category.name, value: category.id.toString() }))}
                     selectedValues={selectedCategories}
                     onSelectionChange={setSelectedCategories}
                     placeholder="Seleccionar categorías"
@@ -574,10 +645,40 @@ function AdvancedFilters({
                     />
                 </div>
             </div>
-            <div className="flex justify-center pt-2">
-                <Button onClick={onApplyFilters} className="w-full md:w-auto max-w-xs flex items-center justify-center gap-2">
-                    <Filter className="h-5 w-5" />
-                    Aplicar filtros
+            <div className="flex justify-center pt-2 gap-2">
+                <TooltipProvider>
+                    <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                            <span>
+                                <Button
+                                    onClick={onApplyFilters}
+                                    className="w-full md:w-auto max-w-xs flex items-center justify-center gap-2"
+                                    disabled={!filtersTouched}
+                                >
+                                    <Filter className="h-5 w-5" />
+                                    Aplicar filtros
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        {!filtersTouched && (
+                            <TooltipContent side="top" align="center">
+                                Aplica al menos un filtro para habilitar este botón
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                </TooltipProvider>
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        setSelectedCategories([]);
+                        setSelectedVendors([]);
+                        setPriceRange([0, 0]);
+                        if (typeof onClearFilters === 'function') {
+                            onClearFilters();
+                        }
+                    }}
+                >
+                    Limpiar filtros
                 </Button>
             </div>
         </div>
