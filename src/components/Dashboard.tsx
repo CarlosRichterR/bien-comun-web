@@ -141,22 +141,15 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-grow">
-                                    <p className="mb-1 font-medium">{list.productCount} artículos</p>
+                                    <p className="mb-1 font-medium">
+                                        {list.productCount} {list.productCount === 1 ? 'artículo' : 'artículos'}
+                                    </p>
                                     <p className="text-sm text-gray-600">Tipo de Evento: {getEventTypeLabel(Number(list.eventType))}</p>
                                 </CardContent>
                                 <CardFooter className="flex flex-wrap gap-2 justify-between">
-                                    {list.listStatus !== "publish" && (
-                                        <Button variant="outline" onClick={() => onEditList(list.id, list.listStatus === "publish" ? "published" : "draft")}> 
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            Editar
-                                        </Button>
-                                    )}
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => onViewList(list.id)}
-                                    >
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        Ver
+                                    <Button variant="outline" onClick={() => onEditList(list.id, list.listStatus === "publish" ? "published" : "draft")}> 
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Editar
                                     </Button>
                                     {list.listStatus === "publish" && (
                                         <Button variant="outline" onClick={() => onViewProgressReport(list.id, mockProgressReportData)}>
@@ -209,13 +202,8 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                         <td className="px-4 py-2">{list.productCount}</td>
                                         <td className="px-4 py-2">{getEventTypeLabel(Number(list.eventType))}</td>
                                         <td className="px-4 py-2 flex flex-wrap gap-1">
-                                            {list.listStatus !== "publish" && (
-                                                <Button variant="outline" size="sm" onClick={() => onEditList(list.id, list.listStatus === "publish" ? "published" : "draft")}> 
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                            <Button variant="outline" size="sm" onClick={() => onViewList(list.id)}>
-                                                <Eye className="h-4 w-4" />
+                                            <Button variant="outline" size="sm" onClick={() => onEditList(list.id, list.listStatus === "publish" ? "published" : "draft")}> 
+                                                <Edit className="h-4 w-4" />
                                             </Button>
                                             {list.listStatus === "publish" && (
                                                 <Button variant="outline" size="sm" onClick={() => onViewProgressReport(list.id, mockProgressReportData)}>
