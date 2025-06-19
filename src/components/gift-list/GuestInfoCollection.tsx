@@ -4,6 +4,7 @@ import { InfoIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useEffect, useRef } from "react";
 
 export function GuestInfoCollection({
     guestCount,
@@ -20,6 +21,30 @@ export function GuestInfoCollection({
     onGuestCountChange: (count: number) => void;
     onMinContributionChange: (minContrib: number) => void;
 }) {
+    const guestCountRef = useRef<HTMLInputElement>(null);
+    const minContributionRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        // Cambiar mensajes de validación a español
+        if (guestCountRef.current) {
+            guestCountRef.current.oninvalid = (e) => {
+                (e.target as HTMLInputElement).setCustomValidity('Por favor, complete este campo.');
+            };
+            guestCountRef.current.oninput = (e) => {
+                (e.target as HTMLInputElement).setCustomValidity('');
+            };
+        }
+        
+        if (minContributionRef.current) {
+            minContributionRef.current.oninvalid = (e) => {
+                (e.target as HTMLInputElement).setCustomValidity('Por favor, complete este campo.');
+            };
+            minContributionRef.current.oninput = (e) => {
+                (e.target as HTMLInputElement).setCustomValidity('');
+            };
+        }
+    }, []);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSubmit(guestCount, minContribution);
@@ -32,8 +57,8 @@ export function GuestInfoCollection({
                 <CardDescription>Por favor, proporcione detalles sobre sus invitados y la contribución mínima.</CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-4">
-                    <Input
+                <CardContent className="space-y-4">                    <Input
+                        ref={guestCountRef}
                         id="guestCount"
                         type="text"
                         inputMode="numeric"
@@ -45,7 +70,7 @@ export function GuestInfoCollection({
                     />
                     <div className="space-y-2">
                         <div className="flex items-center space-x-2">
-                            <Label htmlFor="minContribution">Contribución Mínima ($)</Label>
+                            <Label htmlFor="minContribution">Contribución Mínima (Bs.)</Label>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger>
@@ -56,8 +81,8 @@ export function GuestInfoCollection({
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        </div>
-                        <Input
+                        </div>                        <Input
+                            ref={minContributionRef}
                             id="minContribution"
                             type="number"
                             min="0"

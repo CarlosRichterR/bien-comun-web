@@ -299,17 +299,26 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack, initialDat
 
     return (
         <div className="w-full max-w-4xl mx-auto relative pt-10">
-            {/* Exit confirmation dialog */}
-            <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-                <AlertDialogContent>
+            {/* Exit confirmation dialog */}            <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+                <AlertDialogContent className="relative">
+                    {/* Botón X para cerrar sin hacer nada */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-4 top-4 h-6 w-6 p-0 hover:bg-muted"
+                        onClick={() => setShowExitDialog(false)}
+                        aria-label="Cerrar diálogo"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro de que quieres salir?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tu progreso se guardará como borrador. Puedes continuar más tarde desde donde lo dejaste.
+                            Elige una opción para continuar:
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel onClick={onExit}>Salir sin guardar</AlertDialogCancel>
                         <AlertDialogAction onClick={handleExit}>Salir y Guardar</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
