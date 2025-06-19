@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { PlusCircle, Edit, Eye, QrCode, Bell, BarChart, Trash, ArrowUpRight, List, LayoutGrid } from 'lucide-react'
+import { PlusCircle, Edit, QrCode, Bell, BarChart, Trash, ArrowUpRight, List, LayoutGrid } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { QRCodeSVG } from 'qrcode.react'
 import { mockProgressReportData } from "../utils/mockData";
+import { CatalogItem } from "@/utils/catalog-data";
 import { fetchGiftLists, GiftList } from "@/services/listService"
 import { deleteGiftList } from "@/services/listService"
 import { getEventTypeLabel } from "@/lib/getEventTypeLabel";
@@ -16,21 +17,30 @@ import { useRouter } from 'next/navigation';
 
 // Removed unused mockLists and EventType import
 
+interface FullGiftList extends GiftList {
+    products?: CatalogItem[];
+    campaignEndTime?: string;
+    location?: number[];
+    email?: string;
+    phone?: string;
+    useMinContribution?: boolean;
+    termsAccepted?: boolean;
+}
+
 interface DashboardProps {
     onCreateNewList: () => void;
-    onEditList: (listId: number, status: 'draft' | 'published') => void;
-    onViewList: (listId: number) => void;
+    onEditList: (listId: number) => void;
     onViewNotifications: (listId: number) => void;
     onViewProgressReport: (listId: number, progressReportData: unknown) => void; // Updated prop type
 }
 
-export default function Dashboard({ onCreateNewList, onEditList, onViewList, onViewNotifications, onViewProgressReport }: DashboardProps) {
+export default function Dashboard({ onCreateNewList, onEditList, onViewNotifications, onViewProgressReport }: DashboardProps) {
     const [lists, setLists] = useState<GiftList[]>([])
     const [selectedQRCode, setSelectedQRCode] = useState<{ id: number, name: string } | null>(null)
     const [listToDelete, setListToDelete] = useState<GiftList | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card') // New state for view mode
-    const [editingList, setEditingList] = useState<GiftList | null>(null)
+    const [editingList, setEditingList] = useState<FullGiftList | null>(null)
     const router = useRouter();
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const editId = searchParams?.get('id');
@@ -42,13 +52,12 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
     }, [])
 
     useEffect(() => {
-        async function loadEditingList() {
-            if (editId && lists.length > 0) {
+        async function loadEditingList() {            if (editId && lists.length > 0) {
                 try {
                     const { fetchGiftListWithProducts } = await import("@/services/fetchGiftListWithProducts");
                     const fullList = await fetchGiftListWithProducts(Number(editId));
                     setEditingList(fullList);
-                } catch (e) {
+                } catch {
                     setEditingList(null);
                 }
             } else {
@@ -97,8 +106,7 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                     onBack={() => { setEditingList(null); router.push('/dashboard'); }}
                 />
             ) : (
-                <>
-                    <header className="flex justify-between items-center mb-8">
+                <>                    <header className="flex justify-between items-center mb-8">
                         <h2 className="text-3xl font-bold">Inicio</h2>
                         <Button onClick={onCreateNewList} className="bg-primary text-primary-foreground hover:bg-primary/90">
                             <PlusCircle className="mr-2 h-4 w-4" />
@@ -313,8 +321,25 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
                                     {isDeleting ? 'Borrando...' : 'Borrar'}
                                 </Button>
                             </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                        </DialogContent>                    </Dialog>                    {/* Floating Action Button */}
+                    <div className="fixed bottom-6 right-6 z-50 group">
+                        <Button
+                            onClick={onCreateNewList}
+                            className="h-14 w-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-110 hover:-translate-y-1"
+                            size="icon"
+                            aria-label="Crear Nueva Lista"
+                        >
+                            <PlusCircle className="h-6 w-6 transition-transform duration-200 group-hover:rotate-90" />
+                        </Button>
+                        
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none">
+                            <div className="bg-gray-900 text-white text-sm px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
+                                Crear Nueva Lista
+                                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                        </div>
+                    </div>
                 </>
             )}
         </div>
@@ -322,7 +347,7 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewList, onV
 }
 
 // Función utilitaria para mapear GiftList a initialData para GiftListCreationProcess
-function mapGiftListToInitialData(list: GiftList) {
+function mapGiftListToInitialData(list: FullGiftList) {
     return {
         eventTypeDTO: {
             type: Number(list.eventType),
@@ -346,7 +371,7 @@ function mapGiftListToInitialData(list: GiftList) {
             useMinContribution: list.useMinContribution ?? true,
             termsAccepted: list.termsAccepted ?? false,
         },
-        listStatus: list.listStatus === "publish" ? "publish" : "draft",
+        listStatus: (list.listStatus === "publish" ? "publish" : "draft") as ("publish" | "draft"),
         listId: list.id,
     }
 }

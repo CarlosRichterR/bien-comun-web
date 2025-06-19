@@ -298,9 +298,10 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack, initialDat
     );
 
     return (
-        <div className="w-full max-w-4xl mx-auto relative pt-10">
-            {/* Exit confirmation dialog */}            <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-                <AlertDialogContent className="relative">
+        <>
+            {/* Exit confirmation dialog */}
+            <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+                <AlertDialogContent>
                     {/* Botón X para cerrar sin hacer nada */}
                     <Button
                         variant="ghost"
@@ -313,133 +314,134 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack, initialDat
                     </Button>
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro de que quieres salir?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Elige una opción para continuar:
-                        </AlertDialogDescription>
                     </AlertDialogHeader>
+                    <div className="py-2" />
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={onExit}>Salir sin guardar</AlertDialogCancel>
                         <AlertDialogAction onClick={handleExit}>Salir y Guardar</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            <div className="mb-8 flex items-start justify-between">
-                {/* Stepper (barra de progreso y pasos) */}
-                <div className="flex-1">
-                    <div className="w-full bg-muted rounded-full h-2 mb-4">
-                        <div
-                            className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
-                            style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
-                        />
+
+            <div className="w-full max-w-4xl mx-auto relative pt-10">
+                <div className="mb-8 flex items-start justify-between">
+                    {/* Stepper (barra de progreso y pasos) */}
+                    <div className="flex-1">
+                        <div className="w-full bg-muted rounded-full h-2 mb-4">
+                            <div
+                                className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
+                                style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+                            />
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                            {steps.map((step, index) => (
+                                <button
+                                    key={step}
+                                    type="button"
+                                    className={`flex flex-col items-center focus:outline-none ${index <= currentStepIndex ? 'text-primary' : 'text-muted-foreground'}`}
+                                    onClick={() => setCurrentStep(step)}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                                    aria-current={currentStep === step ? 'step' : undefined}
+                                >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStepIndex ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                        {index + 1}
+                                    </div>
+                                    <span className="text-xs mt-1">{stepLabels[step]}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center mt-2">
-                        {steps.map((step, index) => (
-                            <button
-                                key={step}
-                                type="button"
-                                className={`flex flex-col items-center focus:outline-none ${index <= currentStepIndex ? 'text-primary' : 'text-muted-foreground'}`}
-                                onClick={() => setCurrentStep(step)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                                aria-current={currentStep === step ? 'step' : undefined}
-                            >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStepIndex ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                    {index + 1}
-                                </div>
-                                <span className="text-xs mt-1">{stepLabels[step]}</span>
-                            </button>
-                        ))}
-                    </div>
+                    {/* Botón X alineado a la derecha, más separado y más arriba */}
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="ml-10 mt-[-20px] w-10 h-10 p-0 flex items-center justify-center transition-all duration-200 hover:bg-muted rounded-full"
+                        onClick={() => setShowExitDialog(true)}
+                        aria-label="Salir y guardar borrador"
+                    >
+                        <X className="w-6 h-6" />
+                    </Button>
                 </div>
-                {/* Botón X alineado a la derecha, más separado y más arriba */}
-                <Button
-                    type="button"
-                    variant="ghost"
-                    className="ml-10 mt-[-20px] w-10 h-10 p-0 flex items-center justify-center transition-all duration-200 hover:bg-muted rounded-full"
-                    onClick={() => setShowExitDialog(true)}
-                    aria-label="Salir y guardar borrador"
-                >
-                    <X className="w-6 h-6" />
-                </Button>
-            </div>
 
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentStep}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    {currentStep === "event-selection" && (
-                        <EventTypeSelection
-                            eventTypeDTO={eventTypeDTO} // Pasar el objeto EventTypeDTO como prop
-                            onEventTypeSelected={handleEventTypeSelected}
-                            onNext={handleNext}
-                            onBack={onBack}
-                        />
-                    )}
-                    {currentStep === "guest-info" && (
-                        <GuestInfoCollection
-                            guestCount={guestCount} // Pasar guestCount como prop
-                            minContribution={minContribution} // Pasar minContribution como prop
-                            onSubmit={handleGuestInfoSubmitted} // Manejar el envío de datos
-                            onBack={handleBack} // Manejar el retroceso
-                            onGuestCountChange={handleGuestInfoUpdate} // Actualizar guestCount
-                            onMinContributionChange={handleMinContributionUpdate} // Actualizar minContribution
-                        />
-                    )}
-                    {currentStep === "gift-selection" && (
-                        <GiftSelection
-                            eventType={eventTypeDTO.type}
-                            customEventType={eventTypeDTO.customType}
-                            listId={null}
-                            initialStatus="draft"
-                            onSave={handleGiftSelectionSave}
-                            guestCount={guestCount}
-                            minContribution={minContribution}
-                            onBack={handleBack}
-                            onNext={handleNext}
-                            onSelectedGiftsChange={handleSelectedGiftsChange}
-                            selectedGiftsFather={selectedGifts || []} // Pasar la función como prop
-                        />
-                    )}
-                    {currentStep === "list-details" && (
-                        <ListDetails
-                            initialDetails={listDetails}
-                            onSubmit={handleListDetailsSubmitted}
-                            onBack={handleBack}
-                            onNext={handleNext}
-                            onChange={handleListDetailsChange}
-                            isAddressModified={isAddressModified} // Pasar la bandera
-                            setIsAddressModified={setIsAddressModified}
-                        />
-                    )}
-                    {currentStep === "list-confirmation" && (
-                        <ListConfirmation
-                            onSubmit={handlePublish}
-                            onBack={handleBack}
-                            initialData={confirmationData}
-                            minContribution={minContribution}
-                            onMinContributionChange={handleMinContributionUpdate}
-                            onChange={handleConfirmationChange}
-                            isPublishable={isPublishable}
-                            missingFields={getMissingFields()}
-                        />
-                    )}
-                </motion.div>
-            </AnimatePresence>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentStep}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {currentStep === "event-selection" && (
+                            <EventTypeSelection
+                                eventTypeDTO={eventTypeDTO} // Pasar el objeto EventTypeDTO como prop
+                                onEventTypeSelected={handleEventTypeSelected}
+                                onNext={handleNext}
+                                onBack={onBack}
+                            />
+                        )}
+                        {currentStep === "guest-info" && (
+                            <GuestInfoCollection
+                                guestCount={guestCount} // Pasar guestCount como prop
+                                minContribution={minContribution} // Pasar minContribution como prop
+                                onSubmit={handleGuestInfoSubmitted} // Manejar el envío de datos
+                                onBack={handleBack} // Manejar el retroceso
+                                onGuestCountChange={handleGuestInfoUpdate} // Actualizar guestCount
+                                onMinContributionChange={handleMinContributionUpdate} // Actualizar minContribution
+                            />
+                        )}
+                        {currentStep === "gift-selection" && (
+                            <GiftSelection
+                                eventType={eventTypeDTO.type}
+                                customEventType={eventTypeDTO.customType}
+                                listId={null}
+                                initialStatus="draft"
+                                onSave={handleGiftSelectionSave}
+                                guestCount={guestCount}
+                                minContribution={minContribution}
+                                onBack={handleBack}
+                                onNext={handleNext}
+                                onSelectedGiftsChange={handleSelectedGiftsChange}
+                                selectedGiftsFather={selectedGifts || []} // Pasar la función como prop
+                            />
+                        )}
+                        {currentStep === "list-details" && (
+                            <ListDetails
+                                initialDetails={listDetails}
+                                onSubmit={handleListDetailsSubmitted}
+                                onBack={handleBack}
+                                onNext={handleNext}
+                                onChange={handleListDetailsChange}
+                                isAddressModified={isAddressModified} // Pasar la bandera
+                                setIsAddressModified={setIsAddressModified}
+                            />
+                        )}
+                        {currentStep === "list-confirmation" && (
+                            <ListConfirmation
+                                onSubmit={handlePublish}
+                                onBack={handleBack}
+                                initialData={confirmationData}
+                                minContribution={minContribution}
+                                onMinContributionChange={handleMinContributionUpdate}
+                                onChange={handleConfirmationChange}
+                                isPublishable={isPublishable}
+                                missingFields={getMissingFields()}
+                            />
+                        )}
+                    </motion.div>
+                </AnimatePresence>
 
-            <div className="mt-8 flex justify-center">
-                <Button
-                    variant="outline"
-                    className="shadow-md hover:shadow-lg transition-shadow duration-300"
-                    onClick={() => setShowExitDialog(true)}
-                >
-                    <Save className="h-4 w-4 mr-2" />
-                    Salir y Guardar Borrador
-                </Button>
+                <div className="mt-8 flex justify-center">
+                    <Button
+                        variant="outline"
+                        className="shadow-md hover:shadow-lg transition-shadow duration-300"
+                        onClick={() => setShowExitDialog(true)}
+                    >
+                        <Save className="h-4 w-4 mr-2" />
+                        Salir y Guardar Borrador
+                    </Button>
+                </div>
             </div>
-        </div>
+        </>
     )
 }
 

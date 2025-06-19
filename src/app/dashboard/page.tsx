@@ -14,11 +14,9 @@ export default function DashboardPage() {
         router.push(`/dashboard/editar-lista?id=${listId}`);
     };
 
-    return (
-        <Dashboard
+    return (        <Dashboard
             onCreateNewList={handleCreateNewList}
             onEditList={handleEditList}
-            onViewList={() => { }}
             onViewNotifications={() => { }}
             onViewProgressReport={() => { }}
         />
