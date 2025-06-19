@@ -25,36 +25,42 @@ interface GiftListCreationProcessProps {
     onComplete: (listData: any) => void;
     onExit: () => void;
     onBack: () => void;
+    initialData?: {
+        eventTypeDTO: EventTypeDTO;
+        guestCount: number;
+        minContribution: number;
+        selectedGifts: CatalogItem[];
+        listDetails: ListDetailsData;
+        confirmationData: ConfirmationData;
+        listStatus: ListStatus;
+        listId?: string | number; // <-- Add listId for editing
+    };
 }
 
-export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftListCreationProcessProps) {
+export function GiftListCreationProcess({ onComplete, onExit, onBack, initialData }: GiftListCreationProcessProps) {
     const router = useRouter()
     const [currentStep, setCurrentStep] = useState<Step>("event-selection")
-    const [eventTypeDTO, setEventTypeDTO] = useState<EventTypeDTO>({
-        type: EventType.Wedding,
-        customType: undefined,
-    });
-    const [guestCount, setGuestCount] = useState<number>(0)
-    const [minContribution, setMinContribution] = useState<number>(200)
-    const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>([])
-
-    const [listDetails, setListDetails] = useState<ListDetailsData>({
+    const [eventTypeDTO, setEventTypeDTO] = useState<EventTypeDTO>(() => initialData?.eventTypeDTO || { type: EventType.Wedding, customType: undefined })
+    const [guestCount, setGuestCount] = useState<number>(() => initialData?.guestCount ?? 0)
+    const [minContribution, setMinContribution] = useState<number>(() => initialData?.minContribution ?? 200)
+    const [selectedGifts, setSelectedGifts] = useState<CatalogItem[]>(() => initialData?.selectedGifts || [])
+    const [listDetails, setListDetails] = useState<ListDetailsData>(() => initialData?.listDetails || {
         eventDate: null,
         campaignStartDate: null,
         campaignStartTime: "",
         campaignEndDate: null,
         campaignEndTime: "",
-        location: [-17.3936, -66.157], // Coordenadas iniciales (Cochabamba, Bolivia)
+        location: [-17.3936, -66.157],
         address: "",
-    });
+    })
     const [isAddressModified, setIsAddressModified] = useState(false);
-    const [confirmationData, setConfirmationData] = useState<ConfirmationData>({
+    const [confirmationData, setConfirmationData] = useState<ConfirmationData>(() => initialData?.confirmationData || {
         email: "",
         phone: "",
         useMinContribution: true,
         termsAccepted: false,
-    });
-    const [listStatus, setListStatus] = useState<ListStatus>("draft"); // Added state for list status
+    })
+    const [listStatus, setListStatus] = useState<ListStatus>(() => initialData?.listStatus || "draft")
     const [showExitDialog, setShowExitDialog] = useState(false);
 
     const steps: Step[] = ["event-selection", "guest-info", "gift-selection", "list-details", "list-confirmation"]
@@ -113,13 +119,26 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         };
 
         try {
-            const response = await fetch(`${process.env.API_URL}/api/List`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(draftData),
-            });
+            let response;
+            if (initialData?.listId) {
+                // Editing existing list (save as draft)
+                response = await fetch(`${process.env.API_URL}/api/List/${initialData.listId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(draftData),
+                });
+            } else {
+                // Creating new draft
+                response = await fetch(`${process.env.API_URL}/api/List`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(draftData),
+                });
+            }
 
             if (!response.ok) {
                 throw new Error('Failed to save draft');
@@ -191,13 +210,26 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
         };
 
         try {
-            const response = await fetch(`${process.env.API_URL}/api/List`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(publishData),
-            });
+            let response;
+            if (initialData?.listId) {
+                // Editing existing list
+                response = await fetch(`${process.env.API_URL}/api/List/${initialData.listId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(publishData),
+                });
+            } else {
+                // Creating new list
+                response = await fetch(`${process.env.API_URL}/api/List`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(publishData),
+                });
+            }
 
             if (!response.ok) {
                 throw new Error('Failed to publish list');
@@ -216,8 +248,10 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack }: GiftList
     }
 
     useEffect(() => {
-        loadDraft()
-    }, [])
+        if (!initialData) {
+            loadDraft()
+        }
+    }, [initialData])
 
     useEffect(() => {
         setListDetails(prev => ({
