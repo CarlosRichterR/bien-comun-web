@@ -1,8 +1,7 @@
-export class ListDetailsData {
+export class ListDetailsData3 {
     listName?: string;
     eventDate?: Date;
     campaignStartDate?: Date;
-    campaignStartTime?: string;
     campaignEndDate?: Date;
     campaignEndTime?: string;
     location?: [number, number];

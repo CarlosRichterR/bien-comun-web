@@ -5,6 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
+import { isValid, parseISO } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -143,8 +144,19 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {listDetails.eventDate
-                                        ? format(listDetails.eventDate, "PPP", { locale: es })
+                                    {listDetails.eventDate &&
+                                        isValid(
+                                            typeof listDetails.eventDate === 'string'
+                                                ? parseISO(listDetails.eventDate)
+                                                : listDetails.eventDate
+                                        )
+                                        ? format(
+                                            typeof listDetails.eventDate === 'string'
+                                                ? parseISO(listDetails.eventDate)
+                                                : listDetails.eventDate,
+                                            "PPP",
+                                            { locale: es }
+                                        )
                                         : <span>Seleccione una fecha</span>}
                                 </Button>
                             </PopoverTrigger>
@@ -154,7 +166,13 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
                             >
                                 <Calendar
                                     mode="single"
-                                    selected={listDetails.eventDate}
+                                    selected={
+                                        listDetails.eventDate
+                                            ? (typeof listDetails.eventDate === 'string'
+                                                ? parseISO(listDetails.eventDate)
+                                                : listDetails.eventDate)
+                                            : undefined
+                                    }
                                     onSelect={(date) => updateField("eventDate", date!)}
                                     initialFocus
                                     disabled={(date) => date < new Date()} // Deshabilitar fechas pasadas
@@ -175,8 +193,19 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {listDetails.campaignEndDate
-                                            ? format(listDetails.campaignEndDate, "PPP", { locale: es })
+                                        {listDetails.campaignEndDate &&
+                                            isValid(
+                                                typeof listDetails.campaignEndDate === 'string'
+                                                    ? parseISO(listDetails.campaignEndDate)
+                                                    : listDetails.campaignEndDate
+                                            )
+                                            ? format(
+                                                typeof listDetails.campaignEndDate === 'string'
+                                                    ? parseISO(listDetails.campaignEndDate)
+                                                    : listDetails.campaignEndDate,
+                                                "PPP",
+                                                { locale: es }
+                                            )
                                             : <span>Seleccione una fecha</span>}
                                     </Button>
                                 </PopoverTrigger>
@@ -186,7 +215,13 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
                                 >
                                     <Calendar
                                         mode="single"
-                                        selected={listDetails.campaignEndDate}
+                                        selected={
+                                            listDetails.campaignEndDate
+                                                ? (typeof listDetails.campaignEndDate === 'string'
+                                                    ? parseISO(listDetails.campaignEndDate)
+                                                    : listDetails.campaignEndDate)
+                                                : undefined
+                                        }
                                         onSelect={(date) => updateField("campaignEndDate", date!)}
                                         initialFocus
                                         disabled={(date) => date < new Date()} // Deshabilitar fechas pasadas
@@ -197,9 +232,9 @@ export function ListDetails({ initialDetails, onSubmit, onBack, onNext, onChange
                                 <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="time"
-                                    value={listDetails.campaignEndTime}
-                                    onChange={(e) => updateField("campaignEndTime", e.target.value)}
-                                    required
+                                    value={listDetails.campaignEndTime || ""}
+                                    onChange={e => updateField("campaignEndTime", e.target.value)}
+                                    className="w-32"
                                 />
                             </div>
                         </div>

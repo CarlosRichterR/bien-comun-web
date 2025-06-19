@@ -334,7 +334,6 @@ function mapGiftListToInitialData(list: GiftList) {
         listDetails: {
             eventDate: list.eventDate || null,
             campaignStartDate: list.campaignStartDate || null,
-            campaignStartTime: list.campaignStartTime || "",
             campaignEndDate: list.campaignEndDate || null,
             campaignEndTime: list.campaignEndTime || "",
             location: list.location || [-17.3936, -66.157],

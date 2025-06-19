@@ -47,7 +47,6 @@ export function GiftListCreationProcess({ onComplete, onExit, onBack, initialDat
     const [listDetails, setListDetails] = useState<ListDetailsData>(() => initialData?.listDetails || {
         eventDate: null,
         campaignStartDate: null,
-        campaignStartTime: "",
         campaignEndDate: null,
         campaignEndTime: "",
         location: [-17.3936, -66.157],
