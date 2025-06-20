@@ -160,6 +160,7 @@ export default function Dashboard({ onCreateNewList, onEditList, onViewNotificat
                                                         variant="outline"
                                                         className="h-8 w-8 p-0"
                                                         aria-label="Ir a la lista publicada"
+                                                        onClick={() => window.open(`/lista/${list.id}`, '_blank')}
                                                     >
                                                         <ArrowUpRight className="h-5 w-5" />
                                                     </Button>

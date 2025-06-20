@@ -27,7 +27,7 @@ export function CustomProductModal({ isOpen, onClose, onAddProduct }: CustomProd
         const newProduct: CatalogItem = {
             id: `custom-${Date.now()}`,
             name,
-            price: parseFloat(price) / 6.96, // Convert to USD for consistency
+            price: parseFloat(price), // Price in bolivianos
             category,
             imageUrl: imageUrl || '/placeholder.svg?height=100&width=100',
             supplier: 'Personalizado',

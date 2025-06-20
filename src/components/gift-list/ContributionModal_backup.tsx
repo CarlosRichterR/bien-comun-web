@@ -34,9 +34,7 @@ export function ContributionModal({
     const [error, setError] = useState<string | null>(null)
 
     const remainingAmount = itemPrice - contributedAmount
-    const fullContribution = remainingAmount
-
-    const validateEmail = (email: string) => {
+    const fullContribution = remainingAmount    const validateEmail = (email: string) => {
         const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
         return re.test(String(email).toLowerCase())
     }
@@ -93,16 +91,15 @@ export function ContributionModal({
             }
         }}>
             <DialogContent>
+
                 {step === 'amount' && (
                     <>
                         <DialogHeader>
-                            <DialogTitle>Contribuir a {itemName}</DialogTitle>
-                            <DialogDescription>
+                            <DialogTitle>Contribuir a {itemName}</DialogTitle>                            <DialogDescription>
                                 Este artículo cuesta Bs {itemPrice.toFixed(2)}. Ya se ha contribuido Bs {contributedAmount.toFixed(2)}.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <Button onClick={() => setContributionAmount(fullContribution.toFixed(2))}>
+                        <div className="grid gap-4 py-4">                            <Button onClick={() => setContributionAmount(fullContribution.toFixed(2))}>
                                 Contribuir el monto completo (Bs {fullContribution.toFixed(2)})
                             </Button>
                             <div className="grid grid-cols-4 items-center gap-4">
@@ -121,8 +118,7 @@ export function ContributionModal({
                                     step="0.01"
                                 />
                             </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        </div>                        <p className="text-sm text-muted-foreground mb-4">
                             Monto de contribución seleccionado: Bs {parseFloat(contributionAmount || '0').toFixed(2)}
                         </p>
                         {error && (
@@ -151,8 +147,7 @@ export function ContributionModal({
                                 Por favor, proporcione su información de contacto para el comprobante de la contribución.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4 max-w-md mx-auto">
-                            <p className="text-sm text-muted-foreground">
+                        <div className="grid gap-4 py-4 max-w-md mx-auto">                            <p className="text-sm text-muted-foreground">
                                 Monto de contribución seleccionado: Bs {parseFloat(contributionAmount || '0').toFixed(2)}
                             </p>
                             <RadioGroup value={contactType} onValueChange={(value: 'email' | 'phone') => setContactType(value)} className="grid gap-2">
@@ -240,3 +235,4 @@ export function ContributionModal({
         </Dialog>
     )
 }
+
