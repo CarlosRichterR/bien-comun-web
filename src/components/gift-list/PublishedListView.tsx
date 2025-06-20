@@ -99,52 +99,17 @@ export function PublishedListView({
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {items.length > 0 ? (
-                        <div className="grid gap-6 md:grid-cols-2">
+                    {items.length > 0 ? (                        <div className="grid gap-6 md:grid-cols-2">
                             {items.map((item) => {
                                 const contrib = contributions.find(c => c.ProductId === Number(item.id));
                                 const contributedAmount = contrib ? contrib.TotalContributed : (item.contributedAmount || 0);
                                 return (
-                                    <Card key={item.id} className="flex flex-col h-full">
-                                        <CardHeader>
-                                            <Image
-                                                src={item.imageUrl || "/placeholder.svg"}
-                                                alt={item.name}
-                                                width={200}
-                                                height={200}
-                                                className="rounded-md mx-auto"
-                                            />
-                                        </CardHeader>                                        <CardContent>
-                                            <h3 className="font-semibold">{item.name}</h3>
-                                            <p className="text-sm text-muted-foreground">Bs {item.price.toFixed(2)}</p>
-                                            <div className="mt-2">
-                                                <Progress value={(contributedAmount / item.price) * 100} className="h-2" />
-                                                <p className="text-sm text-green-600 mt-1">
-                                                    Bs {contributedAmount.toFixed(2)} de Bs {item.price.toFixed(2)} contribuido
-                                                </p>
-                                            </div>
-                                        </CardContent>
-                                        <CardFooter className="mt-auto">
-                                            <Button
-                                                className="w-full"
-                                                variant={contributedAmount >= item.price ? "secondary" : "default"}
-                                                onClick={() => handleContribute(item.id)}
-                                                disabled={contributedAmount >= item.price}
-                                            >
-                                                {contributedAmount >= item.price ? (
-                                                    <>
-                                                        <Heart className="mr-2 h-4 w-4 fill-current" />
-                                                        Completamente Financiado
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Gift className="mr-2 h-4 w-4" />
-                                                        Contribuir
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </CardFooter>
-                                    </Card>
+                                    <ProductCard
+                                        key={item.id}
+                                        item={item}
+                                        contributedAmount={contributedAmount}
+                                        onContribute={handleContribute}
+                                    />
                                 );
                             })}
                         </div>
@@ -197,8 +162,63 @@ export function PublishedListView({
                     minContribution={minContribution}
                     onContribute={handleContributionSubmit}
                 />
-            )}
-        </div>
+            )}        </div>
     )
+}
+
+// Componente auxiliar para manejar las imágenes con fallback
+interface ProductCardProps {
+    item: CatalogItem;
+    contributedAmount: number;
+    onContribute: (id: string) => void;
+}
+
+function ProductCard({ item, contributedAmount, onContribute }: ProductCardProps) {
+    const [imgSrc, setImgSrc] = useState(item.imageUrl || item.thumbnailUrl || "/assets/images/gift.svg");
+
+    return (
+        <Card className="flex flex-col h-full">
+            <CardHeader>
+                <Image
+                    src={imgSrc}
+                    alt={item.name || "Imagen del producto"}
+                    width={200}
+                    height={200}
+                    className="rounded-md mx-auto"
+                    onError={() => setImgSrc("/assets/images/gift.svg")}
+                />
+            </CardHeader>
+            <CardContent>
+                <h3 className="font-semibold">{item.name}</h3>
+                <p className="text-sm text-muted-foreground">Bs {item.price.toFixed(2)}</p>
+                <div className="mt-2">
+                    <Progress value={(contributedAmount / item.price) * 100} className="h-2" />
+                    <p className="text-sm text-green-600 mt-1">
+                        Bs {contributedAmount.toFixed(2)} de Bs {item.price.toFixed(2)} contribuido
+                    </p>
+                </div>
+            </CardContent>
+            <CardFooter className="mt-auto">
+                <Button
+                    className="w-full"
+                    variant={contributedAmount >= item.price ? "secondary" : "default"}
+                    onClick={() => onContribute(item.id)}
+                    disabled={contributedAmount >= item.price}
+                >
+                    {contributedAmount >= item.price ? (
+                        <>
+                            <Heart className="mr-2 h-4 w-4 fill-current" />
+                            Completamente Financiado
+                        </>
+                    ) : (
+                        <>
+                            <Gift className="mr-2 h-4 w-4" />
+                            Contribuir
+                        </>
+                    )}
+                </Button>
+            </CardFooter>
+        </Card>
+    );
 }
 
